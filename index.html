@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>汉字 Flashcards</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Playfair+Display:wght@400;700&display=swap');
+
+  :root {
+    --ink: #1a1208;
+    --paper: #f5f0e8;
+    --accent: #c0392b;
+    --gold: #b8860b;
+    --muted: #8a7a6a;
+    --card-bg: #faf7f2;
+    --border: #d4c9b0;
+    --green: #2d6a4f;
+    --red: #c0392b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(180,160,120,0.15) 28px),
+      repeating-linear-gradient(90deg, transparent, transparent 27px, rgba(180,160,120,0.08) 28px);
+    background-size: 28px 28px;
+  }
+
+  header {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    border-bottom: 2px solid var(--border);
+    background: linear-gradient(180deg, rgba(245,240,232,0.95) 0%, rgba(245,240,232,0.6) 100%);
+    backdrop-filter: blur(4px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+  }
+
+  header h1 span {
+    font-family: 'Noto Serif SC', serif;
+    color: var(--accent);
+    font-size: 2rem;
+    margin-right: 0.3rem;
+  }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(245,240,232,0.8);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.9rem;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .tab.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .tab:hover:not(.active) {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  .view { display: none; padding: 2rem 1rem; max-width: 680px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  /* ADD CARD VIEW */
+  .field-group { margin-bottom: 1.2rem; }
+  .field-group label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .field-group label .zh { font-family: 'Noto Serif SC', serif; font-size: 1rem; color: var(--accent); }
+
+  input, textarea, select {
+    width: 100%;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    padding: 0.7rem 0.9rem;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, textarea:focus { border-color: var(--ink); }
+
+  .hanzi-input {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 2.5rem;
+    text-align: center;
+    padding: 1rem;
+    letter-spacing: 0.1em;
+  }
+
+  .pinyin-input { font-size: 1.1rem; text-align: center; }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.7rem 2rem;
+    border: 1.5px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn-primary:hover { background: var(--accent); border-color: var(--accent); }
+  .btn-secondary { background: transparent; color: var(--ink); border-color: var(--border); }
+  .btn-secondary:hover { border-color: var(--ink); }
+
+  .btn-row { display: flex; gap: 0.7rem; margin-top: 1.5rem; flex-wrap: wrap; }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--green);
+    color: white;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.7rem 1.5rem;
+    transition: transform 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* REVIEW VIEW */
+  .stats-bar {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stats-bar span b { color: var(--ink); }
+
+  .card-area {
+    perspective: 1000px;
+    height: 320px;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    user-select: none;
+  }
+
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .card-inner.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    box-shadow: 4px 4px 0 var(--border);
+  }
+
+  .card-back { transform: rotateY(180deg); }
+
+  .card-spanish {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    line-height: 1.2;
+    color: var(--ink);
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-pinyin-big {
+    font-family: 'DM Mono', monospace;
+    font-size: 2.4rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-align: center;
+    margin-bottom: 0.6rem;
+  }
+
+  .card-hanzi {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+    text-align: center;
+  }
+
+  .card-translation {
+    font-size: 1.3rem;
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .card-notes {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.8rem;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .flip-hint {
+    text-align: center;
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .rating-row {
+    display: flex;
+    gap: 0.7rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .btn-fail { background: transparent; color: var(--red); border-color: var(--red); }
+  .btn-fail:hover { background: var(--red); color: white; }
+  .btn-ok { background: transparent; color: var(--gold); border-color: var(--gold); }
+  .btn-ok:hover { background: var(--gold); color: white; }
+  .btn-good { background: transparent; color: var(--green); border-color: var(--green); }
+  .btn-good:hover { background: var(--green); color: white; }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+  }
+  .empty-state .zh-big {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+  .empty-state p { font-size: 0.85rem; line-height: 1.8; }
+
+  /* LIST VIEW */
+  .search-box { margin-bottom: 1rem; }
+
+  .card-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .card-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    transition: border-color 0.2s;
+  }
+
+  .card-row:hover { border-color: var(--ink); }
+
+  .card-row .zh {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.8rem;
+    min-width: 2.5rem;
+    color: var(--ink);
+  }
+
+  .card-row .info { flex: 1; }
+  .card-row .info .py { font-size: 0.75rem; color: var(--muted); font-style: italic; }
+  .card-row .info .tr { font-size: 0.85rem; color: var(--ink); }
+
+  .card-row .score {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-align: right;
+    min-width: 3rem;
+  }
+
+  .btn-del {
+    font-size: 0.8rem;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    transition: color 0.2s;
+  }
+  .btn-del:hover { color: var(--red); }
+
+  .tag-select select {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    border-color: var(--border);
+    width: auto;
+  }
+
+  .tag-pill {
+    display: inline-block;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    margin-top: 0.3rem;
+  }
+
+  .section-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+  .filter-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-pill.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .session-done {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+  .session-done .big { font-family: 'Noto Serif SC', serif; font-size: 3rem; color: var(--gold); display: block; margin-bottom: 0.5rem; }
+  .session-done p { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+
+  .progress-bar-wrap {
+    height: 3px;
+    background: var(--border);
+    margin-bottom: 1rem;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.4s;
+  }
+
+  .btn-speak {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0.3rem 0.7rem;
+    line-height: 1;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+  }
+  .btn-speak:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-speak.speaking { border-color: var(--gold); color: var(--gold); animation: pulse 0.8s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .backup-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .unsaved-warn { font-size: 0.68rem; color: var(--accent); margin-left: auto; }
+
+  #pronun-input::placeholder { color: var(--muted); font-size: 0.8rem; }
+
+  .btn-mic {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.4rem;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn-mic:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-mic.recording {
+    border-color: var(--accent);
+    color: var(--accent);
+    animation: pulse 0.8s infinite;
+  }
+
+  #mic-result {
+    margin-top: 0.8rem;
+    font-size: 0.85rem;
+    min-height: 2rem;
+    padding: 0 1rem;
+  }
+  .mic-match { color: var(--green); font-weight: 500; }
+  .mic-close  { color: var(--gold); }
+  .mic-miss   { color: var(--accent); }
+  .mic-heard  { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; font-style: italic; }
+
+  /* Variantes */
+  .variant-row { display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.4rem; }
+  .variant-row input { flex: 1; font-size: 0.9rem; }
+  .variant-row .btn-del { border: 1px solid var(--border); padding: 0.4rem 0.6rem; border-radius: 0; }
+
+  /* Modal duplicados */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(26,18,8,0.55);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .modal-box {
+    background: var(--card-bg); border: 2px solid var(--border);
+    max-width: 420px; width: 100%; padding: 1.5rem;
+    box-shadow: 6px 6px 0 var(--border);
+  }
+  .modal-box h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--accent);
+  }
+  .modal-box .dup-card {
+    background: var(--paper); border: 1px solid var(--border);
+    padding: 0.6rem 0.8rem; margin-bottom: 1rem; font-size: 0.82rem; line-height: 1.7;
+  }
+  .modal-box .btn-row { margin-top: 0; gap: 0.5rem; }
+
+  /* Selector de categoría en repaso */
+  .review-filter-bar {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    margin-bottom: 1.2rem; padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .review-filter-bar .label {
+    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); margin-right: 0.3rem;
+  }
+
+  /* Progreso por categoría */
+  .progress-view { padding: 0; }
+  .cat-progress-row {
+    margin-bottom: 1.4rem;
+  }
+  .cat-progress-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 0.3rem;
+  }
+  .cat-progress-name {
+    font-size: 0.82rem; font-weight: 500; color: var(--ink);
+    text-transform: capitalize;
+  }
+  .cat-progress-stats {
+    font-size: 0.68rem; color: var(--muted); letter-spacing: 0.05em;
+  }
+  .cat-bar-wrap {
+    height: 6px; background: var(--border); position: relative;
+  }
+  .cat-bar-fill {
+    height: 100%; background: var(--green);
+    transition: width 0.5s ease;
+  }
+  .cat-bar-pending {
+    position: absolute; top: 0; height: 100%;
+    background: var(--accent); opacity: 0.5;
+  }
+  .progress-legend {
+    display: flex; gap: 1.2rem; margin-bottom: 1.5rem;
+    padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.68rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; flex-shrink: 0; }
+
+  /* Gestor de categorías */
+  .rename-row {
+    display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.6rem;
+  }
+  .rename-row input { flex: 1; font-size: 0.85rem; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span>汉字</span> Mis Flashcards</h1>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('review')">▷ Repasar</button>
+  <button class="tab" onclick="switchTab('add')">＋ Añadir</button>
+  <button class="tab" onclick="switchTab('list')">≡ Colección</button>
+  <button class="tab" onclick="switchTab('progress')">◎ Progreso</button>
+  <button class="tab" onclick="switchTab('settings')">⚙ Ajustes</button>
+</div>
+
+<div id="view-review" class="view active"></div>
+<div id="view-add" class="view">
+  <div class="section-title">Nueva tarjeta</div>
+  <div class="field-group">
+    <label>Pīnyīn (pronunciación en chino) <span style="color:var(--accent)">*</span></label>
+    <input class="pinyin-input" id="inp-pinyin" type="text" placeholder="ni3 hao3 o nǐ hǎo" oninput="updatePinyinPreview()">
+    <div id="pinyin-preview" style="text-align:center;font-size:1.1rem;color:var(--accent);margin-top:0.4rem;font-family:'DM Mono',monospace;min-height:1.5rem"></div>
+  </div>
+  <div class="field-group">
+    <label style="display:flex;justify-content:space-between;align-items:center">
+      <span>Variantes <span style="color:var(--muted);font-size:0.65rem">(otras formas de decirlo)</span></span>
+      <button type="button" class="btn btn-secondary" style="font-size:0.62rem;padding:0.3rem 0.7rem" onclick="addVariantField()">+ Añadir variante</button>
+    </label>
+    <div id="variants-container"></div>
+  </div>
+  <div class="field-group">
+    <label>Traducción en español <span style="color:var(--accent)">*</span></label>
+    <input id="inp-translation" type="text" placeholder="Hola">
+  </div>
+  <div class="field-group">
+    <label><span class="zh">汉</span> Hanzi (opcional, si ya lo conoces)</label>
+    <div style="display:flex;gap:0.4rem;align-items:center">
+      <input class="hanzi-input" id="inp-hanzi" type="text" placeholder="你好" maxlength="20" style="flex:1">
+      <button class="btn btn-secondary" style="font-size:0.65rem;white-space:nowrap;padding:0.7rem 0.8rem" onclick="autoFillHanziForm()">Buscar 汉</button>
+    </div>
+  </div>
+  <div class="field-group">
+    <label>Notas (opcional)</label>
+    <input id="inp-notes" type="text" placeholder="Ej: tono 3+3, saludo informal">
+  </div>
+  <div class="field-group">
+    <label>Categoría (opcional)</label>
+    <input id="inp-tag" type="text" placeholder="Ej: saludos, números, familia..." list="tag-suggestions" autocomplete="off">
+    <datalist id="tag-suggestions"></datalist>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="addCard()">Guardar tarjeta</button>
+    <button class="btn btn-secondary" onclick="clearForm()">Limpiar</button>
+  </div>
+</div>
+
+<div id="view-list" class="view">
+  <div class="section-title">Colección completa</div>
+  <div class="backup-bar">
+    <button class="btn btn-primary" onclick="exportCards()">↓ Exportar copia</button>
+    <label class="btn btn-secondary" style="cursor:pointer">↑ Importar <input type="file" accept=".json" style="display:none" onchange="importCards(event)"></label>
+    <span class="unsaved-warn" id="unsaved-warn"></span>
+  </div>
+  <div class="filter-row" id="filter-row"></div>
+  <div class="search-box">
+    <input id="search-inp" type="text" placeholder="Buscar hanzi, pinyin o traducción..." oninput="renderList()">
+  </div>
+  <div class="card-list" id="card-list"></div>
+</div>
+
+<div id="view-progress" class="view">
+  <div class="section-title">Progreso por categoría</div>
+  <div id="progress-content"></div>
+</div>
+
+<div id="view-settings" class="view">
+  <div class="section-title">Sincronización en la nube</div>
+  <div class="field-group">
+    <label>API Key de JSONBin</label>
+    <input id="jb-api-key" type="password" placeholder="Pega aquí tu API key de JSONBin..." oninput="saveJbKey()">
+    <div style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem;line-height:1.7">
+      Sincroniza tus tarjetas entre dispositivos. Consíguela en
+      <a href="https://jsonbin.io" target="_blank" style="color:var(--accent)">jsonbin.io</a>
+      → API Keys.
+    </div>
+  </div>
+  <div id="jb-status" style="font-size:0.75rem;margin-top:0.3rem"></div>
+  <div class="field-group" style="margin-top:0.8rem">
+    <label>Bin ID <span style="color:var(--muted);font-size:0.65rem">(pégalo desde otro dispositivo)</span></label>
+    <div style="display:flex;gap:0.4rem">
+      <input id="jb-bin-id" type="text" placeholder="Pega el Bin ID aquí..." style="font-size:0.8rem;flex:1">
+      <button class="btn btn-secondary" style="font-size:0.65rem;white-space:nowrap" onclick="saveBinId()">Guardar</button>
+    </div>
+  </div>
+  <div class="btn-row" style="margin-top:0.8rem">
+    <button class="btn btn-primary" onclick="syncToCloud()">↑ Subir tarjetas</button>
+    <button class="btn btn-secondary" onclick="syncFromCloud()">↓ Bajar tarjetas</button>
+  </div>
+
+  <div class="section-title" style="margin-top:2rem">Gestión de categorías</div>
+  <div style="font-size:0.75rem;color:var(--muted);margin-bottom:1rem;line-height:1.7">
+    Renombra una categoría en todas las tarjetas de golpe. Útil para unificar variantes como "numero" → "números".
+  </div>
+  <div id="rename-cat-list"></div>
+
+  <div class="section-title" style="margin-top:2rem">Ajustes de audio</div>
+  <div class="field-group">
+    <label>API Key de Google Cloud TTS</label>
+    <input id="gc-api-key" type="password" placeholder="Pega aquí tu API key de Google Cloud..." oninput="saveGcKey()">
+    <div style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem;line-height:1.7">
+      Se guarda solo en tu navegador. Consíguela en
+      <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--accent)">Google Cloud Console</a>
+      → Credenciales → Crear clave de API.
+    </div>
+  </div>
+  <div id="gc-status" style="font-size:0.75rem;margin-top:0.5rem"></div>
+  <div class="btn-row" style="margin-top:1rem">
+    <button class="btn btn-primary" onclick="testGoogleTTS()">▷ Probar audio</button>
+    <button class="btn btn-secondary" onclick="clearGcKey()">Borrar clave</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="dictionary.js"></script>
+<script>
+// ── Storage ──────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'hanzicards_v1';
+const JB_KEY_STORAGE = 'jb_api_key';
+const JB_BIN_STORAGE = 'jb_bin_id';
+
+function loadCards() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveCards(cards) {
+  const payload = { cards, updatedAt: Date.now() };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  const key = localStorage.getItem(JB_KEY_STORAGE);
+  const bin = localStorage.getItem(JB_BIN_STORAGE);
+  if (key && bin) pushToCloud(key, bin, payload);
+}
+
+function loadCards() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    // Support both old format (array) and new format ({cards, updatedAt})
+    return Array.isArray(parsed) ? parsed : (parsed.cards || []);
+  } catch { return []; }
+}
+
+// ── JSONBin sync ──────────────────────────────────────────────────────────────
+function getJbKey() { return localStorage.getItem(JB_KEY_STORAGE) || ''; }
+function getJbBin() { return localStorage.getItem(JB_BIN_STORAGE) || ''; }
+
+function saveJbKey() {
+  const key = document.getElementById('jb-api-key').value.trim();
+  if (key) localStorage.setItem(JB_KEY_STORAGE, key);
+}
+
+function initJbSettingsView() {
+  const stored = getJbKey();
+  if (stored) document.getElementById('jb-api-key').value = stored;
+  const bin = getJbBin();
+  const statusEl = document.getElementById('jb-status');
+  if (bin) {
+    statusEl.innerHTML = `
+      <span style="color:var(--green)">✓ Bin configurado</span>
+      <div style="margin-top:0.5rem;font-size:0.7rem;color:var(--muted)">Bin ID (cópialo en otros dispositivos):</div>
+      <div style="display:flex;gap:0.4rem;align-items:center;margin-top:0.3rem">
+        <input type="text" value="${bin}" readonly id="bin-id-display"
+          style="font-size:0.72rem;padding:0.3rem 0.5rem;color:var(--ink);background:var(--card-bg);flex:1">
+        <button class="btn btn-secondary" style="font-size:0.65rem;white-space:nowrap"
+          onclick="navigator.clipboard.writeText('${bin}').then(()=>showToast('✓ Copiado'))">Copiar</button>
+      </div>`;
+  }
+}
+
+function saveBinId() {
+  const val = document.getElementById('jb-bin-id')?.value.trim();
+  if (val) {
+    localStorage.setItem(JB_BIN_STORAGE, val);
+    showToast('✓ Bin ID guardado');
+    initJbSettingsView();
+  }
+}
+
+async function pushToCloud(key, bin, data) {
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${bin}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': key },
+      body: JSON.stringify(data)
+    });
+  } catch(e) { console.warn('Cloud sync failed:', e); }
+}
+
+async function syncToCloud() {
+  const key = document.getElementById('jb-api-key').value.trim();
+  if (!key) { showToast('Introduce primero tu API key de JSONBin', '#c0392b'); return; }
+  localStorage.setItem(JB_KEY_STORAGE, key);
+  const statusEl = document.getElementById('jb-status');
+  statusEl.innerHTML = '<span style="color:var(--muted)">Subiendo...</span>';
+  try {
+    let bin = getJbBin();
+    if (!bin) {
+      // Create new bin
+      const res = await fetch('https://api.jsonbin.io/v3/b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': key,
+          'X-Bin-Name': 'flashcards-chino',
+          'X-Bin-Private': 'true'
+        },
+        body: JSON.stringify({ cards, updatedAt: Date.now() })
+      });
+      if (!res.ok) throw new Error('Error al crear bin');
+      const data = await res.json();
+      bin = data.metadata.id;
+      localStorage.setItem(JB_BIN_STORAGE, bin);
+    } else {
+      await pushToCloud(key, bin, cards);
+    }
+    statusEl.innerHTML = `<span style="color:var(--green)">✓ ${cards.length} tarjetas subidas</span>`;
+    showToast(`✓ Sincronizado — ${cards.length} tarjetas`);
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--accent)">✗ Error: ${e.message}</span>`;
+    showToast('Error al sincronizar', '#c0392b');
+  }
+}
+
+async function syncFromCloud() {
+  const key = document.getElementById('jb-api-key').value.trim() || getJbKey();
+  const bin = getJbBin();
+  if (!key) { showToast('Introduce primero tu API key de JSONBin', '#c0392b'); return; }
+  if (!bin) { showToast('Primero sube las tarjetas desde el Mac', '#c0392b'); return; }
+  const statusEl = document.getElementById('jb-status');
+  statusEl.innerHTML = '<span style="color:var(--muted)">Bajando...</span>';
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${bin}/latest`, {
+      headers: { 'X-Master-Key': key }
+    });
+    if (!res.ok) throw new Error('Error al leer bin');
+    const data = await res.json();
+    const record = data.record;
+    const cloudCards = Array.isArray(record) ? record : record.cards;
+    if (!Array.isArray(cloudCards)) throw new Error('Formato incorrecto');
+    cards = cloudCards;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards, updatedAt: Array.isArray(record) ? 0 : (record.updatedAt || 0) }));
+    statusEl.innerHTML = `<span style="color:var(--green)">✓ ${cards.length} tarjetas bajadas</span>`;
+    showToast(`✓ ${cards.length} tarjetas cargadas desde la nube`);
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--accent)">✗ Error: ${e.message}</span>`;
+    showToast('Error al bajar tarjetas', '#c0392b');
+  }
+}
+
+let cards = loadCards();
+
+// ── Auto-sync on startup ──────────────────────────────────────────────────────
+async function autoLoadFromCloud() {
+  const key = getJbKey();
+  const bin = getJbBin();
+  if (!key || !bin) return;
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${bin}/latest`, {
+      headers: { 'X-Master-Key': key }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const record = data.record;
+    const cloudCards = Array.isArray(record) ? record : record.cards;
+    const cloudTs = Array.isArray(record) ? 0 : (record.updatedAt || 0);
+    if (!Array.isArray(cloudCards)) return;
+
+    // Get local timestamp
+    let localTs = 0;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        localTs = Array.isArray(parsed) ? 0 : (parsed.updatedAt || 0);
+      }
+    } catch {}
+
+    // Cloud wins if it's newer
+    if (cloudTs >= localTs) {
+      cards = cloudCards;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards, updatedAt: cloudTs }));
+    }
+  } catch(e) { console.warn('Auto-load failed:', e); }
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  const tabNames = ['review','add','list','progress','settings'];
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', tabNames[i] === tab);
+  });
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  if (tab === 'review') startReview();
+  if (tab === 'list') renderList();
+  if (tab === 'progress') renderProgress();
+  if (tab === 'settings') initSettingsView();
+}
+
+// ── Tone conversion (ni3 hao3 → nǐ hǎo) ─────────────────────────────────────
+const TONES = {
+  a: ['ā','á','ǎ','à','a'], e: ['ē','é','ě','è','e'],
+  i: ['ī','í','ǐ','ì','i'], o: ['ō','ó','ǒ','ò','o'],
+  u: ['ū','ú','ǔ','ù','u'], ü: ['ǖ','ǘ','ǚ','ǜ','ü'],
+  A: ['Ā','Á','Ǎ','À','A'], E: ['Ē','É','Ě','È','E'],
+  I: ['Ī','Í','Ǐ','Ì','I'], O: ['Ō','Ó','Ǒ','Ò','O'],
+  U: ['Ū','Ú','Ǔ','Ù','U'],
+};
+
+// Tone mark goes on: a/e always; ou→o; last vowel otherwise
+function applyTone(syllable, toneNum) {
+  if (toneNum < 1 || toneNum > 4) return syllable;
+  const idx = toneNum - 1;
+  // Replace ü written as v or u:
+  syllable = syllable.replace(/v/g, 'ü');
+  // Priority: a or e
+  if (/[aAeE]/.test(syllable)) return syllable.replace(/[aAeE]/, m => TONES[m]?.[idx] || m);
+  // ou → mark o
+  if (/ou/i.test(syllable)) return syllable.replace(/[oO]/, m => TONES[m]?.[idx] || m);
+  // last vowel
+  const vowels = /[aeiouüAEIOUÜ]/g;
+  let last = null, match;
+  while ((match = vowels.exec(syllable)) !== null) last = match;
+  if (last) {
+    return syllable.slice(0, last.index) + (TONES[last[0]]?.[idx] || last[0]) + syllable.slice(last.index + 1);
+  }
+  return syllable;
+}
+
+function convertTones(text) {
+  // Match syllable+digit: one or more letters (including ü/v) followed by 1-4
+  return text.replace(/([a-züvA-ZÜV]+)([1-4])/g, (_, syl, num) => applyTone(syl, parseInt(num)));
+}
+
+function updatePinyinPreview() {
+  const raw = document.getElementById('inp-pinyin').value;
+  const preview = document.getElementById('pinyin-preview');
+  const converted = convertTones(raw);
+  preview.textContent = converted !== raw ? '→ ' + converted : '';
+}
+
+// ── Variantes ─────────────────────────────────────────────────────────────────
+function addVariantField(value) {
+  const container = document.getElementById('variants-container');
+  const idx = container.children.length;
+  const row = document.createElement('div');
+  row.className = 'variant-row';
+  row.innerHTML = `
+    <input class="pinyin-input" type="text" placeholder="nín hǎo · formal" 
+      id="variant-${idx}" value="${value||''}" oninput="updateVariantPreview(${idx})">
+    <div id="variant-preview-${idx}" style="font-size:0.85rem;color:var(--accent);min-width:5rem;font-family:'DM Mono',monospace"></div>
+    <button class="btn-del" onclick="this.parentElement.remove()" title="Eliminar">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+function updateVariantPreview(idx) {
+  const input = document.getElementById(`variant-${idx}`);
+  const preview = document.getElementById(`variant-preview-${idx}`);
+  if (!input || !preview) return;
+  const converted = convertTones(input.value);
+  preview.textContent = converted !== input.value ? '→ ' + converted : '';
+}
+
+function getVariants() {
+  const container = document.getElementById('variants-container');
+  return Array.from(container.querySelectorAll('input'))
+    .map(inp => convertTones(inp.value.trim()))
+    .filter(Boolean);
+}
+
+// ── Categorías: normalización y autocompletar ─────────────────────────────────
+function normalizeTag(tag) {
+  return tag.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function findExistingTag(rawTag) {
+  if (!rawTag) return rawTag;
+  const norm = normalizeTag(rawTag);
+  const existing = [...new Set(cards.map(c => c.tag).filter(Boolean))];
+  const match = existing.find(t => normalizeTag(t) === norm);
+  return match || rawTag;
+}
+
+function updateTagSuggestions() {
+  const dl = document.getElementById('tag-suggestions');
+  if (!dl) return;
+  const tags = [...new Set(cards.map(c => c.tag).filter(Boolean))];
+  dl.innerHTML = tags.map(t => `<option value="${t}">`).join('');
+}
+
+// ── Duplicados ────────────────────────────────────────────────────────────────
+function findDuplicates(pinyin, translation, excludeId) {
+  const normPinyin = stripTones(pinyin);
+  const normTrans = translation.toLowerCase().trim();
+  return cards.filter(c => {
+    if (excludeId && c.id === excludeId) return false;
+    const pMatch = stripTones(c.pinyin||'') === normPinyin;
+    const tMatch = (c.translation||'').toLowerCase().trim() === normTrans;
+    return pMatch || tMatch;
+  });
+}
+
+function showDuplicateModal(dups, onConfirm) {
+  const existing = document.getElementById('dup-modal');
+  if (existing) existing.remove();
+
+  const dupHtml = dups.map(c => `
+    <div class="dup-card">
+      <strong>${c.translation}</strong> · <span style="color:var(--accent)">${c.pinyin||''}</span>
+      ${c.hanzi ? ` · <span style="font-family:'Noto Serif SC',serif">${c.hanzi}</span>` : ''}
+      ${c.tag ? ` <span class="tag-pill">${c.tag}</span>` : ''}
+    </div>
+  `).join('');
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'dup-modal';
+  modal.innerHTML = `
+    <div class="modal-box">
+      <h3>⚠ Posible duplicado</h3>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.8rem">Ya existe una tarjeta similar:</p>
+      ${dupHtml}
+      <div class="btn-row">
+        <button class="btn btn-secondary" style="font-size:0.72rem" onclick="document.getElementById('dup-modal').remove()">Cancelar</button>
+        <button class="btn btn-primary" style="font-size:0.72rem" onclick="document.getElementById('dup-modal').remove();(${onConfirm})()">Añadir igualmente</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// ── Add card ──────────────────────────────────────────────────────────────────
+function addCard() {
+  const rawPinyin = document.getElementById('inp-pinyin').value.trim();
+  const pinyin = convertTones(rawPinyin);
+  const translation = document.getElementById('inp-translation').value.trim();
+  const hanzi = document.getElementById('inp-hanzi').value.trim();
+  const notes = document.getElementById('inp-notes').value.trim();
+  const tag = findExistingTag(document.getElementById('inp-tag').value.trim());
+  const variants = getVariants();
+
+  if (!pinyin || !translation) { showToast('¡Falta el pinyin o la traducción!', '#c0392b'); return; }
+
+  // Update tag field in case it was normalized
+  document.getElementById('inp-tag').value = tag;
+
+  const doSave = () => {
+    const card = {
+      id: Date.now(),
+      hanzi, pinyin, translation, notes, tag,
+      variants,
+      score: 0,
+      nextReview: Date.now(),
+      reviewCount: 0
+    };
+    cards.push(card);
+    saveCards(cards);
+    markUnsaved();
+    updateTagSuggestions();
+    clearForm();
+    showToast(hanzi ? `✓ Añadida — ${hanzi}` : '✓ Añadida (hanzi no encontrado — puedes añadirlo manualmente)');
+  };
+
+  const dups = findDuplicates(pinyin, translation, null);
+  if (dups.length > 0) {
+    showDuplicateModal(dups, doSave);
+  } else {
+    doSave();
+  }
+}
+
+// ── Diccionario local pinyin → hanzi ─────────────────────────────────────────
+// El diccionario vive en dictionary.js (cargado antes de este script)
+if (typeof PINYIN_DICT === 'undefined') { console.warn('dictionary.js no cargado'); }
+const _PLACEHOLDER_DICT = {
+  // Saludos y básicos
+  "nǐ hǎo": "你好", "nín hǎo": "您好", "zài jiàn": "再见", "xièxie": "谢谢",
+  "xièxie nǐ": "谢谢你", "bù kèqi": "不客气", "duì bu qǐ": "对不起",
+  "méi guānxi": "没关系", "qǐng": "请", "shì": "是", "bù shì": "不是",
+  "duì": "对", "bù duì": "不对", "hǎo": "好", "bù hǎo": "不好",
+  "xíng": "行", "bù xíng": "不行", "hǎo de": "好的", "wèn tí": "问题",
+  "méi wèntí": "没问题", "dāngrán": "当然", "wèi": "喂",
+
+  // Pronombres
+  "wǒ": "我", "nǐ": "你", "tā": "他", "tā": "她", "wǒmen": "我们",
+  "nǐmen": "你们", "tāmen": "他们", "wǒ de": "我的", "nǐ de": "你的",
+  "tā de": "他的", "zhège": "这个", "nàge": "那个", "zhè": "这",
+  "nà": "那", "nǎ": "哪", "shéi": "谁", "shénme": "什么",
+  "nǎr": "哪儿", "nǎlǐ": "哪里", "zěnme": "怎么", "wèishénme": "为什么",
+  "duōshǎo": "多少", "jǐ": "几",
+
+  // Números
+  "líng": "零", "yī": "一", "èr": "二", "sān": "三", "sì": "四",
+  "wǔ": "五", "liù": "六", "qī": "七", "bā": "八", "jiǔ": "九",
+  "shí": "十", "shíyī": "十一", "shíèr": "十二", "èrshí": "二十",
+  "sānshí": "三十", "sìshí": "四十", "wǔshí": "五十", "liùshí": "六十",
+  "qīshí": "七十", "bāshí": "八十", "jiǔshí": "九十", "yībǎi": "一百",
+  "yīqiān": "一千", "yīwàn": "一万", "yīyì": "一亿",
+  "liǎng": "两", "dì yī": "第一", "dì èr": "第二",
+
+  // Tiempo
+  "jīntiān": "今天", "míngtiān": "明天", "zuótiān": "昨天",
+  "xiànzài": "现在", "shíjiān": "时间", "nián": "年", "yuè": "月",
+  "rì": "日", "hào": "号", "xīngqī": "星期", "xīngqīyī": "星期一",
+  "xīngqīèr": "星期二", "xīngqīsān": "星期三", "xīngqīsì": "星期四",
+  "xīngqīwǔ": "星期五", "xīngqīliù": "星期六", "xīngqītiān": "星期天",
+  "shàngwǔ": "上午", "xiàwǔ": "下午", "wǎnshang": "晚上",
+  "zǎoshang": "早上", "zhōngwǔ": "中午", "diǎn": "点",
+  "fēn": "分", "miǎo": "秒", "xiǎoshí": "小时", "fēnzhōng": "分钟",
+  "chūntiān": "春天", "xiàtiān": "夏天", "qiūtiān": "秋天", "dōngtiān": "冬天",
+
+  // Familia
+  "bàba": "爸爸", "māma": "妈妈", "gēge": "哥哥", "jiějie": "姐姐",
+  "dìdi": "弟弟", "mèimei": "妹妹", "yéye": "爷爷", "nǎinai": "奶奶",
+  "wàigōng": "外公", "wàipó": "外婆", "zhàngfu": "丈夫", "qīzi": "妻子",
+  "érzi": "儿子", "nǚér": "女儿", "háizi": "孩子", "péngyou": "朋友",
+  "nánpéngyou": "男朋友", "nǚpéngyou": "女朋友", "tóngxué": "同学",
+  "lǎoshī": "老师", "xuésheng": "学生", "tóngshì": "同事",
+
+  // Comida y bebida
+  "chī": "吃", "hē": "喝", "fàn": "饭", "miàn": "面", "miàntiáo": "面条",
+  "mǐfàn": "米饭", "miànbāo": "面包", "ròu": "肉", "jī": "鸡",
+  "yú": "鱼", "cài": "菜", "shuǐguǒ": "水果", "píngguǒ": "苹果",
+  "xiāngjiāo": "香蕉", "chéngzi": "橙子", "xīguā": "西瓜",
+  "shuǐ": "水", "chá": "茶", "kāfēi": "咖啡", "niúnǎi": "牛奶",
+  "píjiǔ": "啤酒", "hóngjiǔ": "红酒", "guǒzhī": "果汁",
+  "tāng": "汤", "jiǎozi": "饺子", "bāozi": "包子", "chǎofàn": "炒饭",
+  "huǒguō": "火锅", "là": "辣", "tián": "甜", "xián": "咸",
+  "suān": "酸", "kǔ": "苦", "hǎochī": "好吃", "è": "饿", "kě": "渴",
+
+  // Lugares
+  "jiā": "家", "xuéxiào": "学校", "gōngsī": "公司", "yīyuàn": "医院",
+  "yínháng": "银行", "shāngdiàn": "商店", "chāoshì": "超市",
+  "fàndiàn": "饭店", "jiǔdiàn": "酒店", "fēijīchǎng": "飞机场",
+  "huǒchēzhàn": "火车站", "dìtiě zhàn": "地铁站", "gōngyuán": "公园",
+  "túshūguǎn": "图书馆", "bówùguǎn": "博物馆", "diànyǐngyuàn": "电影院",
+  "yóujú": "邮局", "jǐngchájú": "警察局", "zhōngguó": "中国",
+  "běijīng": "北京", "shànghǎi": "上海", "guǎngzhōu": "广州",
+
+  // Transporte
+  "chē": "车", "qìchē": "汽车", "gōngchē": "公车", "chūzūchē": "出租车",
+  "dìtiě": "地铁", "huǒchē": "火车", "fēijī": "飞机", "chuán": "船",
+  "zìxíngchē": "自行车", "mótuōchē": "摩托车", "kāichē": "开车",
+  "zuò chē": "坐车", "zǒulù": "走路", "pǎo": "跑",
+
+  // Verbos comunes
+  "shì": "是", "yǒu": "有", "méiyǒu": "没有", "zài": "在",
+  "lái": "来", "qù": "去", "shuō": "说", "kàn": "看",
+  "tīng": "听", "xiě": "写", "dú": "读", "xué": "学",
+  "gōngzuò": "工作", "xiūxi": "休息", "shuìjiào": "睡觉",
+  "qǐchuáng": "起床", "xǐzǎo": "洗澡", "chūfā": "出发",
+  "dào": "到", "huí": "回", "jìn": "进", "chū": "出",
+  "shàng": "上", "xià": "下", "kāi": "开", "guān": "关",
+  "mǎi": "买", "mài": "卖", "yòng": "用", "ná": "拿",
+  "gěi": "给", "sòng": "送", "bāng": "帮", "jiào": "叫",
+  "wèn": "问", "huídá": "回答", "zhīdào": "知道",
+  "rènshi": "认识", "liǎojiě": "了解", "míngbai": "明白",
+  "jìde": "记得", "wàngjì": "忘记", "xǐhuān": "喜欢",
+  "ài": "爱", "xiǎng": "想", "xīwàng": "希望", "juéde": "觉得",
+  "rènwéi": "认为", "tóngyì": "同意", "fǎnduì": "反对",
+  "děng": "等", "gǎn": "敢", "néng": "能", "huì": "会",
+  "kěyǐ": "可以", "yīnggāi": "应该", "bìxū": "必须",
+  "yào": "要", "xiǎng yào": "想要", "xūyào": "需要",
+  "kànjian": "看见", "tīngshuō": "听说", "juéde": "觉得",
+  "wánr": "玩儿", "chàng gē": "唱歌", "tiào wǔ": "跳舞",
+  "yóuyǒng": "游泳", "dǎ qiú": "打球", "pá shān": "爬山",
+
+  // Adjetivos
+  "dà": "大", "xiǎo": "小", "duō": "多", "shǎo": "少",
+  "gāo": "高", "ǎi": "矮", "cháng": "长", "duǎn": "短",
+  "kuān": "宽", "zhǎi": "窄", "kuài": "快", "màn": "慢",
+  "guì": "贵", "piányí": "便宜", "xīn": "新", "jiù": "旧",
+  "rè": "热", "lěng": "冷", "nuǎnhuo": "暖和", "liáng": "凉",
+  "qíng": "晴", "yīn": "阴", "xià yǔ": "下雨", "xià xuě": "下雪",
+  "cōngming": "聪明", "pǔtōng": "普通", "tèbié": "特别",
+  "róngyì": "容易", "nán": "难", "zhòngyào": "重要",
+  "máng": "忙", "lèi": "累", "gāoxìng": "高兴", "nánguò": "难过",
+  "shēngqì": "生气", "hàipà": "害怕", "jǐngzhāng": "紧张",
+  "piàoliang": "漂亮", "shuài": "帅", "kě'ài": "可爱",
+  "yǒuyìsi": "有意思", "méiyìsi": "没意思", "bàng": "棒",
+
+  // Cuerpo
+  "shēntǐ": "身体", "tóu": "头", "liǎn": "脸", "yǎnjing": "眼睛",
+  "bízi": "鼻子", "zuǐ": "嘴", "ěrduo": "耳朵", "shǒu": "手",
+  "jiǎo": "脚", "tuǐ": "腿", "bèi": "背", "dùzi": "肚子",
+  "xīn": "心", "tóufa": "头发", "yáchǐ": "牙齿",
+  "tòng": "痛", "shāng": "伤", "bìng": "病", "fāshāo": "发烧",
+  "késou": "咳嗽", "liú bítì": "流鼻涕", "tóuténg": "头疼",
+
+  // Ropa
+  "yīfu": "衣服", "chèn shān": "衬衫", "kùzi": "裤子", "qúnzi": "裙子",
+  "wàitào": "外套", "máoyī": "毛衣", "xiézi": "鞋子", "wàzi": "袜子",
+  "mào zi": "帽子", "shǒutào": "手套", "wéijīn": "围巾",
+  "chuān": "穿", "dài": "戴",
+
+  // Colores
+  "hóng sè": "红色", "lǜ sè": "绿色", "lán sè": "蓝色",
+  "huáng sè": "黄色", "bái sè": "白色", "hēi sè": "黑色",
+  "zǐ sè": "紫色", "chéng sè": "橙色", "fěn sè": "粉色",
+  "hóng": "红", "lǜ": "绿", "lán": "蓝", "huáng": "黄",
+  "bái": "白", "hēi": "黑",
+
+  // Trabajo y estudio
+  "gōngzuò": "工作", "bàngōngshì": "办公室", "huìyì": "会议",
+  "diànnǎo": "电脑", "shǒujī": "手机", "diànhuà": "电话",
+  "diànyóu": "电邮", "wǎngluò": "网络", "wǎngzhàn": "网站",
+  "xuéxí": "学习", "zuòyè": "作业", "kǎoshì": "考试",
+  "chéngjī": "成绩", "bìyè": "毕业", "shū": "书", "bǐ": "笔",
+  "zhǐ": "纸", "zìdiǎn": "字典",
+
+  // Dinero y compras
+  "qián": "钱", "kuài": "块", "máo": "毛", "fēn": "分",
+  "rénmínbì": "人民币", "měiyuán": "美元", "ōuyuán": "欧元",
+  "zhīfù": "支付", "fùqián": "付钱", "zhǎo qián": "找钱",
+  "shōujù": "收据", "dǎzhé": "打折", "yōuhuì": "优惠",
+  "miǎnfèi": "免费", "zhōngguó rén": "中国人",
+
+  // Conectores y partículas
+  "hé": "和", "huòzhě": "或者", "dànshì": "但是", "suǒyǐ": "所以",
+  "yīnwèi": "因为", "rúguǒ": "如果", "suīrán": "虽然",
+  "bù guò": "不过", "érqiě": "而且", "háishi": "还是",
+  "yě": "也", "hái": "还", "jiù": "就", "cái": "才",
+  "yījīng": "已经", "hái méi": "还没", "zhèngzài": "正在",
+  "gāng": "刚", "kuài yào": "快要", "yīqǐ": "一起",
+  "de": "的", "ma": "吗", "ne": "呢", "ba": "吧",
+  "le": "了", "guo": "过", "zhe": "着", "a": "啊",
+  "wèile": "为了", "duìyú": "对于", "guānyú": "关于",
+  "cóng": "从", "dào": "到", "wǎng": "往", "lí": "离",
+
+  // Medidas y cantidad
+  "gè": "个", "zhāng": "张", "běn": "本", "bēi": "杯",
+  "píng": "瓶", "wǎn": "碗", "pán": "盘", "kuài": "块",
+  "tiáo": "条", "jiàn": "件", "shuāng": "双", "bǎ": "把",
+  "diǎn": "点", "yīdiǎn": "一点", "yīxiē": "一些",
+  "hěn": "很", "tài": "太", "fēicháng": "非常", "bǐjiào": "比较",
+  "zuì": "最", "gèng": "更", "chàbuduō": "差不多",
+  "yīgòng": "一共", "zǒnggòng": "总共",
+}; // fin _PLACEHOLDER_DICT (no se usa; el diccionario real está en dictionary.js)
+
+// ── Utilidades de pinyin ──────────────────────────────────────────────────────
+function stripTones(pinyin) {
+  return pinyin.toLowerCase()
+    .replace(/[āáǎà]/g,'a').replace(/[ēéěè]/g,'e')
+    .replace(/[īíǐì]/g,'i').replace(/[ōóǒò]/g,'o')
+    .replace(/[ūúǔù]/g,'u').replace(/[ǖǘǚǜü]/g,'u')
+    .replace(/[1-4]/g,'').trim();
+}
+
+async function fetchHanzi(pinyin, translation) {
+  const key = pinyin.toLowerCase().trim();
+
+  // 1. Direct lookup (whole phrase)
+  if (PINYIN_DICT[key]) return PINYIN_DICT[key];
+
+  // 2. Without spaces
+  const noSpace = key.replace(/ /g, '');
+  const found = Object.entries(PINYIN_DICT).find(([k]) => k.replace(/ /g,'') === noSpace);
+  if (found) return found[1];
+
+  // 3. Stripped tones whole phrase
+  const stripped = stripTones(key);
+  const foundStripped = Object.entries(PINYIN_DICT).find(([k]) => stripTones(k) === stripped);
+  if (foundStripped) return foundStripped[1];
+
+  // 4. Word by word — split on spaces and look up each syllable/word
+  const words = key.split(/\s+/);
+  if (words.length > 1) {
+    const parts = words.map(w => {
+      if (PINYIN_DICT[w]) return PINYIN_DICT[w];
+      const s = stripTones(w);
+      const f = Object.entries(PINYIN_DICT).find(([k]) => stripTones(k) === s);
+      return f ? f[1] : null;
+    });
+    // Only return if we found at least half the words
+    const found = parts.filter(Boolean);
+    if (found.length >= Math.ceil(words.length / 2)) {
+      return parts.map((p, i) => p || `[${words[i]}]`).join('');
+    }
+  }
+
+  return '';
+}
+
+function clearForm() {
+  const lastTag = document.getElementById('inp-tag').value; // preserve category
+  ['inp-hanzi','inp-pinyin','inp-translation','inp-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('pinyin-preview').textContent = '';
+  document.getElementById('inp-tag').value = lastTag; // restore category
+  document.getElementById('variants-container').innerHTML = '';
+  document.getElementById('inp-pinyin').focus();
+}
+
+// ── Review ────────────────────────────────────────────────────────────────────
+let reviewQueue = [];
+let currentIdx = 0;
+let flipped = false;
+let reviewCatFilter = 'all';
+let attemptCount = 0; // counts pinyin attempts per card
+
+function getReviewQueue() {
+  const now = Date.now();
+  return cards
+    .filter(c => {
+      const matchCat = reviewCatFilter === 'all' || c.tag === reviewCatFilter;
+      return c.nextReview <= now && matchCat;
+    })
+    .sort(() => Math.random() - 0.5)
+    .map(c => ({ ...c, _dir: Math.random() < 0.5 ? 'es→zh' : 'zh→es' }));
+}
+
+function startReview() {
+  reviewQueue = getReviewQueue();
+  currentIdx = 0;
+  flipped = false;
+  lastHeard = null;
+  attemptCount = 0;
+  renderReview();
+}
+
+function setReviewFilter(tag) {
+  reviewCatFilter = tag;
+  startReview();
+}
+
+function renderReviewFilterBar() {
+  const tags = getTags();
+  if (tags.length === 0) return '';
+  const pills = [
+    `<button class="filter-pill ${reviewCatFilter==='all'?'active':''}" onclick="setReviewFilter('all')">Todas</button>`,
+    ...tags.map(t => `<button class="filter-pill ${reviewCatFilter===t?'active':''}" onclick="setReviewFilter('${t}')">${t}</button>`)
+  ].join('');
+  return `<div class="review-filter-bar"><span class="label">Categoría:</span>${pills}</div>`;
+}
+
+function renderReview() {
+  const el = document.getElementById('view-review');
+
+  if (cards.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <span class="zh-big">加油</span>
+      <p>Aún no tienes tarjetas.<br>Ve a <strong>Añadir</strong> y crea tu primera flashcard.</p>
+    </div>`;
+    return;
+  }
+
+  const filterBar = renderReviewFilterBar();
+
+  if (reviewQueue.length === 0) {
+    const catCards = reviewCatFilter === 'all' ? cards : cards.filter(c => c.tag === reviewCatFilter);
+    el.innerHTML = `
+      ${filterBar}
+      <div class="session-done">
+        <span class="big">✓</span>
+        <p>¡Al día! No hay tarjetas pendientes${reviewCatFilter !== 'all' ? ` en <strong>${reviewCatFilter}</strong>` : ''}.<br>Añade más o vuelve más tarde.</p>
+        <button class="btn btn-secondary" onclick="reviewQueue=((reviewCatFilter==='all'?cards:cards.filter(c=>c.tag===reviewCatFilter)).slice().sort(()=>Math.random()-0.5).map(c=>({...c,_dir:Math.random()<0.5?'es→zh':'zh→es'})));currentIdx=0;renderReview()">Repasar todas igualmente</button>
+      </div>`;
+    return;
+  }
+
+  const card = reviewQueue[currentIdx];
+  const progress = (currentIdx / reviewQueue.length) * 100;
+  const esZh = card._dir === 'es→zh';
+
+  const speakTarget = (card.hanzi || card.pinyin).replace(/'/g,"\\'");
+  const frontContent = esZh
+    ? `<div class="card-spanish">${card.translation}</div>
+       <div id="mic-area" style="margin-top:1.2rem;text-align:center">
+         <input id="pronun-input" type="text" placeholder="Escribe en pinyin: ni3 hao3"
+           style="text-align:center;font-size:0.9rem;max-width:260px;margin-bottom:0.3rem"
+           onclick="event.stopPropagation()"
+           onkeydown="event.stopPropagation()"
+           oninput="event.stopPropagation();updatePronunPreview()">
+         <div id="pronun-preview" style="font-size:1rem;color:var(--accent);min-height:1.4rem;font-family:'DM Mono',monospace;margin-bottom:0.3rem"></div>
+         <button class="btn btn-secondary" style="font-size:0.72rem" onclick="event.stopPropagation();checkPronunciation()">Comprobar</button>
+         <div id="pronun-feedback" style="margin-top:0.5rem;font-size:0.8rem"></div>
+       </div>`
+    : `<div style="display:flex;gap:0.5rem;justify-content:center;margin-bottom:1rem">
+         <button class="btn-speak" style="font-size:1.3rem;padding:0.6rem 1.4rem" onclick="event.stopPropagation();speakChinese('${(card.pinyin||'').replace(/'/g,"\\'")}','${(card.hanzi||'').replace(/'/g,"\\'")}')">🔊 Escuchar</button>
+         <button class="btn-speak" style="font-size:1.1rem;padding:0.6rem 0.9rem" title="Lento" onclick="event.stopPropagation();speakChinese('${(card.pinyin||'').replace(/'/g,"\\'")}','${(card.hanzi||'').replace(/'/g,"\\'")}','slow')">🐢</button>
+       </div>
+       <div id="pinyin-reveal" style="min-height:2.5rem;text-align:center"></div>
+       <button class="btn btn-secondary" style="font-size:0.68rem;margin-top:0.5rem" onclick="event.stopPropagation();revealPinyin('${card.pinyin||card.hanzi}','${card.hanzi&&card.pinyin?card.hanzi:''}')">Ver pinyin</button>`;
+
+  const variantsDisplay = (card.variants && card.variants.length > 0)
+    ? `<div style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);text-align:center">
+        <span style="letter-spacing:0.08em;text-transform:uppercase;font-size:0.62rem">Variantes:</span><br>
+        ${card.variants.map(v => `<span style="color:var(--gold);font-family:'DM Mono',monospace">${v}</span>`).join(' &nbsp;·&nbsp; ')}
+       </div>` : '';
+
+  const backContent = esZh
+    ? `<div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.6rem;text-align:center;letter-spacing:0.05em">${card.translation}</div>
+       ${card.pinyin ? `<div class="card-pinyin-big">${card.pinyin}</div>` : ''}
+       ${card.hanzi ? `<div class="card-hanzi">${card.hanzi}</div>` : ''}
+       <div style="display:flex;gap:0.4rem;justify-content:center">
+         <button class="btn-speak" onclick="event.stopPropagation();speakChinese('${(card.pinyin||'').replace(/'/g,"\\'")}','${(card.hanzi||'').replace(/'/g,"\\'")}')">🔊</button>
+         <button class="btn-speak" style="font-size:0.9rem" title="Lento" onclick="event.stopPropagation();speakChinese('${(card.pinyin||'').replace(/'/g,"\\'")}','${(card.hanzi||'').replace(/'/g,"\\'")}','slow')">🐢</button>
+       </div>
+       ${variantsDisplay}
+       <div id="mic-result-back"></div>
+       ${card.notes ? `<div class="card-notes">${card.notes}</div>` : ''}`
+    : `<div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.6rem;text-align:center;font-family:'DM Mono',monospace">${card.pinyin||''}${card.hanzi ? ' · ' + card.hanzi : ''}</div>
+       <div class="card-spanish">${card.translation}</div>${variantsDisplay}${card.notes ? `<div class="card-notes">${card.notes}</div>` : ''}`;
+
+  const dirLabel = esZh ? '🇪🇸 → 🇨🇳' : '🇨🇳 → 🇪🇸';
+
+  el.innerHTML = `
+    ${filterBar}
+    <div class="stats-bar">
+      <span>Pendientes: <b>${reviewQueue.length - currentIdx}</b></span>
+      <span>${dirLabel}</span>
+      <span>${card.tag ? '📂 ' + card.tag : ''}</span>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
+    <div class="flip-hint">Clic para voltear</div>
+    <div class="card-area" onclick="flipCard()" id="card-area">
+      <div class="card-inner" id="card-inner">
+        <div class="card-face card-front">${frontContent}</div>
+        <div class="card-face card-back">${backContent}</div>
+      </div>
+    </div>
+    <div class="rating-row" id="rating-row" style="display:none">
+      <button class="btn btn-fail" onclick="rate('fail')">✗ No lo sé</button>
+      <button class="btn btn-ok" onclick="rate('ok')">△ Más o menos</button>
+      <button class="btn btn-good" onclick="rate('good')">✓ Lo sé</button>
+    </div>
+  `;
+  flipped = false;
+}
+
+function flipCard() {
+  if (!flipped) {
+    const input = document.getElementById('pronun-input');
+    if (input && input.value.trim()) lastHeard = input.value.trim();
+
+    document.getElementById('card-inner').classList.add('flipped');
+    document.getElementById('rating-row').style.display = 'flex';
+
+    const card = reviewQueue[currentIdx];
+    if (card && card._dir === 'es→zh' && lastHeard !== null) {
+      renderMicResultOnBack(card, lastHeard);
+    }
+
+    // Preselect "Más o menos" if more than one attempt was needed
+    if (attemptCount > 1) {
+      document.querySelectorAll('.rating-row .btn').forEach(b => b.style.opacity = '0.4');
+      const okBtn = document.querySelector('.btn-ok');
+      if (okBtn) { okBtn.style.opacity = '1'; okBtn.style.fontWeight = 'bold'; }
+    }
+
+    flipped = true;
+  }
+}
+
+function renderMicResultOnBack(card, heardText) {
+  const el = document.getElementById('mic-result-back');
+  if (!el) return;
+  const target = card.hanzi || '';
+  const targetPinyin = stripTones(card.pinyin || '');
+  const heardLower = heardText.toLowerCase();
+  const isExact = target && heardText === target;
+  const isClose = !isExact && (
+    heardLower.includes(targetPinyin.replace(/ /g,'')) ||
+    targetPinyin.includes(heardLower) ||
+    (target && heardText.includes(target))
+  );
+  let cls, icon;
+  if (isExact)      { cls = 'mic-match'; icon = '✓ ¡Correcto!'; }
+  else if (isClose) { cls = 'mic-close';  icon = '△ Parecido'; }
+  else              { cls = 'mic-miss';   icon = '✗ No coincide'; }
+  el.innerHTML = `<div class="${cls}" style="margin-top:0.7rem;font-size:0.8rem">${icon}</div><div class="mic-heard">Oído: "${heardText}"</div>`;
+}
+
+function rate(result) {
+  const card = reviewQueue[currentIdx];
+  const realCard = cards.find(c => c.id === card.id);
+  if (!realCard) return;
+
+  realCard.reviewCount = (realCard.reviewCount || 0) + 1;
+
+  // Simple SM-2-like spacing
+  const intervals = { fail: 1, ok: 10, good: 30 }; // minutes
+  if (result === 'fail') {
+    realCard.score = Math.max(realCard.score - 1, -5);
+    realCard.nextReview = Date.now() + 1 * 60 * 1000; // 1 min
+  } else if (result === 'ok') {
+    realCard.score += 0.5;
+    realCard.nextReview = Date.now() + 10 * 60 * 1000;
+  } else {
+    realCard.score += 1;
+    // Exponential spacing based on score
+    const mins = Math.min(Math.pow(2, realCard.score) * 15, 60 * 24 * 7); 
+    realCard.nextReview = Date.now() + mins * 60 * 1000;
+  }
+
+  saveCards(cards);
+  currentIdx++;
+  lastHeard = null;
+  attemptCount = 0;
+
+  if (currentIdx >= reviewQueue.length) {
+    reviewQueue = [];
+    currentIdx = 0;
+  }
+
+  renderReview();
+}
+
+// ── List ──────────────────────────────────────────────────────────────────────
+let activeFilter = 'all';
+
+function getTags() {
+  const tags = [...new Set(cards.map(c => c.tag).filter(Boolean))];
+  return tags;
+}
+
+function renderList() {
+  const searchRaw = (document.getElementById('search-inp')?.value || '').toLowerCase();
+  const searchStripped = stripTones(searchRaw);
+  const el = document.getElementById('card-list');
+  const filterRow = document.getElementById('filter-row');
+
+  // Render filter pills
+  const tags = getTags();
+  filterRow.innerHTML = `
+    <button class="filter-pill ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">Todas</button>
+    ${tags.map(t => `<button class="filter-pill ${activeFilter===t?'active':''}" onclick="setFilter('${t}')">${t}</button>`).join('')}
+  `;
+
+  const filtered = cards.filter(c => {
+    const matchTag = activeFilter === 'all' || c.tag === activeFilter;
+    if (!searchRaw) return matchTag;
+    const matchHanzi = (c.hanzi||'').includes(searchRaw);
+    const matchPinyin = stripTones(c.pinyin||'').includes(searchStripped);
+    const matchTrans = (c.translation||'').toLowerCase().includes(searchRaw);
+    const matchVariants = (c.variants||[]).some(v => stripTones(v).includes(searchStripped));
+    return matchTag && (matchHanzi || matchPinyin || matchTrans || matchVariants);
+  });
+
+  if (filtered.length === 0) {
+    el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:2rem;font-size:0.8rem;">Sin resultados</div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(c => `
+    <div class="card-row" id="row-${c.id}">
+      <div class="info" onclick="editCard(${c.id})" style="cursor:pointer;flex:1">
+        <div class="tr" style="font-weight:500">${c.translation}</div>
+        <div class="py" style="font-size:0.9rem;color:var(--accent);font-style:normal">${c.pinyin || '—'}</div>
+        ${c.hanzi ? `<div class="py">${c.hanzi}</div>` : ''}
+        ${c.variants && c.variants.length ? `<div class="py" style="color:var(--gold);font-size:0.75rem">${c.variants.join(' · ')}</div>` : ''}
+        ${c.tag ? `<span class="tag-pill">${c.tag}</span>` : ''}
+      </div>
+      <div class="score">✓ ${c.reviewCount||0}</div>
+      <button class="btn-del" onclick="deleteCard(${c.id})" title="Eliminar">✕</button>
+    </div>
+  `).join('');
+}
+
+function editCard(id) {
+  const card = cards.find(c => c.id === id);
+  if (!card) return;
+  const row = document.getElementById(`row-${id}`);
+  if (!row) return;
+
+  // If already editing this card, close it
+  if (row.querySelector('.edit-form')) { renderList(); return; }
+
+  const variantsHtml = (card.variants||[]).map((v,i) => `
+    <div class="variant-row">
+      <input type="text" value="${v}" id="ev-${id}-${i}" oninput="this.nextElementSibling.textContent=convertTones(this.value)!==this.value?'→ '+convertTones(this.value):''">
+      <div style="font-size:0.8rem;color:var(--accent);min-width:4rem;font-family:'DM Mono',monospace"></div>
+      <button class="btn-del" onclick="this.parentElement.remove()" title="Eliminar">✕</button>
+    </div>
+  `).join('');
+
+  const tags = [...new Set(cards.map(c => c.tag).filter(Boolean))];
+  const tagOptions = tags.map(t => `<option value="${t}">`).join('');
+
+  row.innerHTML = `
+    <div class="edit-form" style="width:100%;padding:0.3rem 0">
+      <div class="field-group" style="margin-bottom:0.6rem">
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Traducción</label>
+        <input id="edit-translation-${id}" type="text" value="${card.translation}" style="font-size:0.9rem;padding:0.4rem 0.6rem">
+      </div>
+      <div class="field-group" style="margin-bottom:0.6rem">
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Pīnyīn</label>
+        <input id="edit-pinyin-${id}" type="text" value="${card.pinyin}" style="font-size:0.9rem;padding:0.4rem 0.6rem">
+      </div>
+      <div class="field-group" style="margin-bottom:0.6rem">
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Variantes</label>
+        <div id="edit-variants-${id}">${variantsHtml}</div>
+        <button type="button" class="btn btn-secondary" style="font-size:0.62rem;padding:0.3rem 0.7rem;margin-top:0.3rem" 
+          onclick="addEditVariantRow(${id})">+ Añadir variante</button>
+      </div>
+      <div class="field-group" style="margin-bottom:0.6rem">
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Hanzi (opcional)</label>
+        <div style="display:flex;gap:0.4rem;align-items:center">
+          <input id="edit-hanzi-${id}" type="text" value="${card.hanzi||''}" style="font-size:1.2rem;padding:0.4rem 0.6rem;font-family:'Noto Serif SC',serif;flex:1">
+          <button class="btn btn-secondary" id="edit-hanzi-btn-${id}" style="font-size:0.65rem;white-space:nowrap" onclick="autoFillHanzi(${id})">Buscar 汉</button>
+        </div>
+      </div>
+      <div class="field-group" style="margin-bottom:0.6rem">
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Notas</label>
+        <input id="edit-notes-${id}" type="text" value="${card.notes||''}" style="font-size:0.9rem;padding:0.4rem 0.6rem">
+      </div>
+      <div class="field-group" style="margin-bottom:0.8rem">
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Categoría</label>
+        <input id="edit-tag-${id}" type="text" value="${card.tag||''}" list="edit-tag-dl-${id}" autocomplete="off" style="font-size:0.9rem;padding:0.4rem 0.6rem">
+        <datalist id="edit-tag-dl-${id}">${tagOptions}</datalist>
+      </div>
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn btn-primary" style="font-size:0.72rem" onclick="saveEdit(${id})">Guardar</button>
+        <button class="btn btn-secondary" style="font-size:0.72rem" onclick="renderList()">Cancelar</button>
+      </div>
+    </div>
+  `;
+}
+
+function addEditVariantRow(id) {
+  const container = document.getElementById(`edit-variants-${id}`);
+  if (!container) return;
+  const idx = container.children.length;
+  const row = document.createElement('div');
+  row.className = 'variant-row';
+  row.innerHTML = `
+    <input type="text" placeholder="variante en pinyin" id="ev-${id}-${idx}" oninput="this.nextElementSibling.textContent=convertTones(this.value)!==this.value?'→ '+convertTones(this.value):''">
+    <div style="font-size:0.8rem;color:var(--accent);min-width:4rem;font-family:'DM Mono',monospace"></div>
+    <button class="btn-del" onclick="this.parentElement.remove()" title="Eliminar">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+async function autoFillHanziForm() {
+  const pinyinVal = convertTones(document.getElementById('inp-pinyin').value.trim());
+  const hanziInput = document.getElementById('inp-hanzi');
+  if (!pinyinVal) { showToast('Introduce primero el pinyin', '#c0392b'); return; }
+  const btn = hanziInput.nextElementSibling;
+  if (btn) btn.textContent = '...';
+  const hanzi = await fetchHanzi(pinyinVal, '');
+  if (btn) btn.textContent = 'Buscar 汉';
+  if (hanzi) {
+    hanziInput.value = hanzi;
+    showToast(`✓ Encontrado — ${hanzi}`);
+  } else {
+    showToast('No encontrado — introdúcelo manualmente', '#b8860b');
+  }
+}
+
+async function autoFillHanzi(id) {
+  const pinyinInput = document.getElementById(`edit-pinyin-${id}`);
+  const hanziInput = document.getElementById(`edit-hanzi-${id}`);
+  if (!pinyinInput || !hanziInput) return;
+  const pinyin = convertTones(pinyinInput.value.trim());
+  if (!pinyin) { showToast('Introduce primero el pinyin', '#c0392b'); return; }
+  const btn = document.getElementById(`edit-hanzi-btn-${id}`);
+  if (btn) btn.textContent = '...';
+  const hanzi = await fetchHanzi(pinyin, '');
+  if (btn) btn.textContent = 'Buscar 汉';
+  if (hanzi) {
+    hanziInput.value = hanzi;
+    showToast(`✓ Encontrado — ${hanzi}`);
+  } else {
+    showToast('No encontrado — introdúcelo manualmente', '#b8860b');
+  }
+}
+
+function saveEdit(id) {
+  const card = cards.find(c => c.id === id);
+  if (!card) return;
+  const rawPinyin = document.getElementById(`edit-pinyin-${id}`).value.trim();
+  card.translation = document.getElementById(`edit-translation-${id}`).value.trim();
+  card.pinyin      = convertTones(rawPinyin).trim();
+  card.hanzi       = document.getElementById(`edit-hanzi-${id}`).value.trim();
+  card.notes       = document.getElementById(`edit-notes-${id}`).value.trim();
+  card.tag         = findExistingTag(document.getElementById(`edit-tag-${id}`).value.trim());
+  // variants
+  const varContainer = document.getElementById(`edit-variants-${id}`);
+  if (varContainer) {
+    card.variants = Array.from(varContainer.querySelectorAll('input'))
+      .map(inp => convertTones(inp.value.trim())).filter(Boolean);
+  }
+  saveCards(cards);
+  updateTagSuggestions();
+  renderList();
+  showToast('✓ Tarjeta actualizada');
+}
+
+function setFilter(f) {
+  activeFilter = f;
+  renderList();
+}
+
+function deleteCard(id) {
+  if (!confirm('¿Eliminar esta tarjeta?')) return;
+  cards = cards.filter(c => c.id !== id);
+  saveCards(cards);
+  renderList();
+}
+
+// ── Export / Import ───────────────────────────────────────────────────────────
+let unsavedCount = 0;
+
+function markUnsaved() {
+  unsavedCount++;
+  const el = document.getElementById('unsaved-warn');
+  if (el) el.textContent = `⚠ ${unsavedCount} tarjeta${unsavedCount>1?'s':''} sin exportar`;
+}
+
+function exportCards() {
+  const data = JSON.stringify(cards, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `flashcards-chino-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  unsavedCount = 0;
+  const el = document.getElementById('unsaved-warn');
+  if (el) el.textContent = '';
+  showToast('✓ Copia exportada');
+}
+
+function importCards(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error();
+      // Merge: add cards with IDs not already present
+      const existingIds = new Set(cards.map(c => c.id));
+      const newCards = imported.filter(c => !existingIds.has(c.id));
+      cards = [...cards, ...newCards];
+      saveCards(cards);
+      renderList();
+      showToast(`✓ ${newCards.length} tarjetas importadas`);
+    } catch {
+      showToast('Error al leer el fichero', '#c0392b');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ── Google Cloud TTS ──────────────────────────────────────────────────────────
+const GC_KEY_STORAGE = 'gc_tts_api_key';
+
+function getGcKey() { return localStorage.getItem(GC_KEY_STORAGE) || ''; }
+
+function saveGcKey() {
+  const key = document.getElementById('gc-api-key').value.trim();
+  if (key) {
+    localStorage.setItem(GC_KEY_STORAGE, key);
+    document.getElementById('gc-status').innerHTML = `<span style="color:var(--green)">✓ Clave guardada</span>`;
+  }
+}
+
+function clearGcKey() {
+  localStorage.removeItem(GC_KEY_STORAGE);
+  document.getElementById('gc-api-key').value = '';
+  document.getElementById('gc-status').innerHTML = `<span style="color:var(--muted)">Clave borrada.</span>`;
+}
+
+async function testGoogleTTS() {
+  const key = document.getElementById('gc-api-key').value.trim();
+  if (!key) { showToast('Introduce primero tu API key', '#c0392b'); return; }
+  localStorage.setItem(GC_KEY_STORAGE, key);
+  document.getElementById('gc-status').innerHTML = `<span style="color:var(--green)">✓ Clave guardada</span>`;
+  // Test with a pinyin phrase
+  await speakChinese('nǐ hǎo', '你好');
+}
+
+async function initSettingsView() {
+  initJbSettingsView();
+  renderRenameCatList();
+  const keyInput = document.getElementById('gc-api-key');
+  const stored = getGcKey();
+  if (stored) {
+    keyInput.value = stored;
+    document.getElementById('gc-status').innerHTML = `<span style="color:var(--green)">✓ Clave guardada</span>`;
+  }
+}
+
+// Convierte pinyin con tildes a notación numérica para SSML de Google
+// nǐ hǎo → ni3 hao3
+function pinyinToNumeric(pinyin) {
+  const toneMap = {
+    'ā':'a1','á':'a2','ǎ':'a3','à':'a4',
+    'ē':'e1','é':'e2','ě':'e3','è':'e4',
+    'ī':'i1','í':'i2','ǐ':'i3','ì':'i4',
+    'ō':'o1','ó':'o2','ǒ':'o3','ò':'o4',
+    'ū':'u1','ú':'u2','ǔ':'u3','ù':'u4',
+    'ǖ':'v1','ǘ':'v2','ǚ':'v3','ǜ':'v4',
+    'ü':'v5'
+  };
+  // Replace toned vowels with letter+number, then clean up
+  let result = pinyin;
+  for (const [toned, plain] of Object.entries(toneMap)) {
+    result = result.split(toned).join(plain);
+  }
+  // Now merge: each consonant cluster + vowel+number should be a syllable
+  // e.g. "ni3 hao3" is already correct format for Google phoneme
+  return result;
+}
+
+// Build SSML with phoneme tag for accurate tones
+function buildSSML(hanzi, pinyin, rate) {
+  const safe = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const rateAttr = rate && rate !== 'medium' ? ` rate="${rate}"` : '';
+  const wrap = content => rateAttr ? `<prosody${rateAttr}>${content}</prosody>` : content;
+  if (hanzi && pinyin) {
+    const numericPinyin = pinyinToNumeric(pinyin);
+    return `<speak>${wrap(`<phoneme alphabet="pinyin" ph="${safe(numericPinyin)}">${safe(hanzi)}</phoneme>`)}</speak>`;
+  }
+  if (hanzi) return `<speak>${wrap(safe(hanzi))}</speak>`;
+  return `<speak>${wrap(safe(hanzi || pinyin))}</speak>`;
+}
+
+async function speakChinese(pinyin, hanzi, rate) {
+  const apiKey = getGcKey();
+  if (!apiKey) {
+    showToast('Configura tu API key de Google Cloud en ⚙ Ajustes', '#c0392b');
+    return;
+  }
+
+  // If only one argument (old call style), treat it as hanzi or pinyin
+  if (hanzi === undefined) {
+    const text = pinyin; // first arg is the raw text
+    const isHanzi = /[\u4e00-\u9fff]/.test(text);
+    if (isHanzi) {
+      hanzi = text;
+      pinyin = null;
+    } else {
+      pinyin = text;
+      hanzi = await fetchHanzi(text, '') || null;
+    }
+  }
+
+  const ssml = buildSSML(hanzi, pinyin, rate);
+
+  try {
+    const res = await fetch(
+      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: { ssml },
+          voice: {
+            languageCode: 'cmn-CN',
+            name: 'cmn-CN-Wavenet-D'  // natural female Mandarin voice
+          },
+          audioConfig: { audioEncoding: 'MP3' }
+        })
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const audioContent = data.audioContent; // base64 MP3
+    const binary = atob(audioContent);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'audio/mpeg' });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play();
+    audio.onended = () => URL.revokeObjectURL(url);
+  } catch(e) {
+    console.error('Google TTS error:', e);
+    showToast(`Error de audio: ${e.message}`, '#c0392b');
+  }
+}
+
+function revealPinyin(pinyin, hanzi) {
+  const el = document.getElementById('pinyin-reveal');
+  if (!el) return;
+  el.innerHTML = `<div class="card-pinyin-big" style="font-size:1.8rem">${pinyin}</div>${hanzi ? `<div class="card-hanzi" style="font-size:1.4rem">${hanzi}</div>` : ''}`;
+  const btns = el.parentElement.querySelectorAll('button.btn-secondary');
+  btns.forEach(b => b.style.display = 'none');
+}
+
+// ── Pronunciación: comparación por texto ──────────────────────────────────────
+let lastHeard = null;
+
+function updatePronunPreview() {
+  const input = document.getElementById('pronun-input');
+  const preview = document.getElementById('pronun-preview');
+  if (!input || !preview) return;
+  const converted = convertTones(input.value);
+  preview.textContent = converted !== input.value ? converted : '';
+}
+
+function checkPronunciation() {
+  const input = document.getElementById('pronun-input');
+  if (!input) return;
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  const typed = convertTones(raw);
+  lastHeard = typed;
+  attemptCount++;
+
+  const card = reviewQueue[currentIdx];
+  // stripTones already lowercases, so comparison is case-insensitive
+  const typedStripped = stripTones(typed);
+
+  const allPinyins = [card.pinyin || ''].concat(card.variants || []);
+  const allStripped = allPinyins.map(p => stripTones(p));
+
+  const isExact = allStripped.some(s => s === typedStripped);
+  const isClose = !isExact && allStripped.some(s =>
+    typedStripped.replace(/ /g,'') === s.replace(/ /g,'') ||
+    s.includes(typedStripped) || typedStripped.includes(s)
+  );
+
+  const el = document.getElementById('pronun-feedback');
+  if (!el) return;
+  if (isExact)      el.innerHTML = `<span class="mic-match">✓ ¡Correcto!</span>`;
+  else if (isClose) el.innerHTML = `<span class="mic-close">△ Casi — voltea para comparar</span>`;
+  else              el.innerHTML = `<span class="mic-miss">✗ No coincide — corrige e inténtalo de nuevo</span>`;
+}
+
+function renderMicResultOnBack(card, typed) {
+  const el = document.getElementById('mic-result-back');
+  if (!el) return;
+  const typedStripped = stripTones(convertTones(typed));
+  const allPinyins = [card.pinyin || ''].concat(card.variants || []);
+  const allStripped = allPinyins.map(p => stripTones(p));
+  const isExact = allStripped.some(s => s === typedStripped);
+  const isClose = !isExact && allStripped.some(s =>
+    typedStripped.replace(/ /g,'') === s.replace(/ /g,'') ||
+    s.includes(typedStripped) || typedStripped.includes(s)
+  );
+  let cls, icon;
+  if (isExact)      { cls = 'mic-match'; icon = '✓ ¡Correcto!'; }
+  else if (isClose) { cls = 'mic-close';  icon = '△ Parecido'; }
+  else              { cls = 'mic-miss';   icon = '✗ No coincide'; }
+  el.innerHTML = `<div class="${cls}" style="margin-top:0.7rem;font-size:0.8rem">${icon}</div><div class="mic-heard">Escribiste: "${convertTones(typed)}"</div>`;
+}
+
+function stopMic(silent) {} // kept for compatibility
+
+// ── Progreso por categoría ────────────────────────────────────────────────────
+function renderProgress() {
+  const el = document.getElementById('progress-content');
+  if (!el) return;
+
+  const tags = getTags();
+  const untagged = cards.filter(c => !c.tag);
+  const allGroups = [
+    ...tags.map(tag => ({ tag, cards: cards.filter(c => c.tag === tag) })),
+    ...(untagged.length > 0 ? [{ tag: null, cards: untagged }] : [])
+  ];
+
+  if (allGroups.length === 0) {
+    el.innerHTML = `<div class="empty-state"><span class="zh-big">📊</span><p>Aún no tienes tarjetas con categoría.<br>Añade categorías al crear tarjetas.</p></div>`;
+    return;
+  }
+
+  // 3 niveles basados en score (igual que los botones de repaso)
+  const knows     = c => (c.score || 0) >= 2;          // ✓ Lo sé  → verde
+  const soSo      = c => (c.score || 0) >= 0.5 && (c.score || 0) < 2; // △ Más o menos → dorado
+  const doesntKnow = c => (c.score || 0) < 0.5;         // ✗ No lo sé → rojo
+
+  const legend = `
+    <div class="progress-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>✓ Lo sé</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>△ Más o menos</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent);opacity:0.7"></div>✗ No lo sé</div>
+    </div>`;
+
+  const rows = allGroups.map(({ tag, cards: gc }) => {
+    const total = gc.length;
+    const knowCount  = gc.filter(knows).length;
+    const soSoCount  = gc.filter(soSo).length;
+    const noCount    = gc.filter(doesntKnow).length;
+    const knowPct  = Math.round((knowCount / total) * 100);
+    const soSoPct  = Math.round((soSoCount / total) * 100);
+    const noPct    = Math.round((noCount / total) * 100);
+    const label = tag || 'Sin categoría';
+
+    return `
+      <div class="cat-progress-row">
+        <div class="cat-progress-header">
+          <span class="cat-progress-name">${label}</span>
+          <span class="cat-progress-stats">${knowCount} sé · ${soSoCount} más o menos · ${noCount} no sé · ${total} total</span>
+        </div>
+        <div class="cat-bar-wrap" style="height:8px">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${knowPct}%;background:var(--green)"></div>
+          <div style="position:absolute;left:${knowPct}%;top:0;height:100%;width:${soSoPct}%;background:var(--gold)"></div>
+          <div style="position:absolute;left:${knowPct+soSoPct}%;top:0;height:100%;width:${noPct}%;background:var(--accent);opacity:0.7"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const totalAll   = cards.length;
+  const knowAll    = cards.filter(knows).length;
+  const soSoAll    = cards.filter(soSo).length;
+  const noAll      = cards.filter(doesntKnow).length;
+
+  el.innerHTML = `
+    <div style="background:var(--card-bg);border:1.5px solid var(--border);padding:1rem;margin-bottom:1.5rem">
+      <div style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:0.8rem;text-align:center">Total — ${totalAll} tarjetas</div>
+      <div style="display:flex;justify-content:space-around;text-align:center">
+        <div><div style="font-size:1.4rem;font-family:'Playfair Display',serif;color:var(--green)">${knowAll}</div><div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">Lo sé</div></div>
+        <div><div style="font-size:1.4rem;font-family:'Playfair Display',serif;color:var(--gold)">${soSoAll}</div><div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">Más o menos</div></div>
+        <div><div style="font-size:1.4rem;font-family:'Playfair Display',serif;color:var(--accent)">${noAll}</div><div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em">No lo sé</div></div>
+      </div>
+    </div>
+    ${legend}
+    ${rows}
+  `;
+}
+
+// ── Gestión de categorías ─────────────────────────────────────────────────────
+function renderRenameCatList() {
+  const el = document.getElementById('rename-cat-list');
+  if (!el) return;
+  const tags = getTags();
+  if (tags.length === 0) {
+    el.innerHTML = `<div style="font-size:0.75rem;color:var(--muted)">No hay categorías todavía.</div>`;
+    return;
+  }
+  el.innerHTML = tags.map(tag => {
+    const count = cards.filter(c => c.tag === tag).length;
+    return `
+      <div class="rename-row">
+        <input type="text" id="rename-${encodeURIComponent(tag)}" value="${tag}" style="font-size:0.85rem;padding:0.4rem 0.6rem">
+        <span style="font-size:0.7rem;color:var(--muted);white-space:nowrap">${count} tarj.</span>
+        <button class="btn btn-secondary" style="font-size:0.65rem;white-space:nowrap;padding:0.4rem 0.7rem"
+          onclick="renameCategory('${tag}', document.getElementById('rename-${encodeURIComponent(tag)}').value)">Renombrar</button>
+      </div>`;
+  }).join('');
+}
+
+function renameCategory(oldTag, newTagRaw) {
+  const newTag = newTagRaw.trim();
+  if (!newTag || newTag === oldTag) { showToast('Introduce un nombre diferente', '#b8860b'); return; }
+  const count = cards.filter(c => c.tag === oldTag).length;
+  cards.forEach(c => { if (c.tag === oldTag) c.tag = newTag; });
+  saveCards(cards);
+  updateTagSuggestions();
+  renderRenameCatList();
+  showToast(`✓ "${oldTag}" → "${newTag}" (${count} tarjetas)`);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, bg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = bg || 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+autoLoadFromCloud().then(() => {
+  updateTagSuggestions();
+  startReview();
+});
+</script>
+</body>
+</html>
