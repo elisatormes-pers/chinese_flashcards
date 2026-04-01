@@ -1801,18 +1801,19 @@ function renderList() {
     const tagsHtml = (c.tags||[]).map(t => `<span class="tag-pill">${t}</span>`).join(' ');
     const checked = selectedIds.has(c.id) ? 'checked' : '';
     return `
-    <div class="card-row" id="row-${c.id}">
-      <input type="checkbox" ${checked} onchange="toggleSelect(${c.id},this.checked)"
-        onclick="event.stopPropagation()" style="margin-right:0.2rem;cursor:pointer;flex-shrink:0">
-      <div class="info" onclick="editCard(${c.id})" style="cursor:pointer;flex:1">
+    <div class="card-row" id="row-${c.id}" style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.8rem 1rem">
+      <label style="display:flex;align-items:center;padding-top:0.15rem;cursor:pointer;flex-shrink:0" onclick="event.stopPropagation()">
+        <input type="checkbox" ${checked} onchange="toggleSelect(${c.id},this.checked)" style="cursor:pointer;width:14px;height:14px">
+      </label>
+      <div class="info" onclick="editCard(${c.id})" style="cursor:pointer;flex:1;min-width:0">
         <div class="tr" style="font-weight:500">${c.translation}</div>
         <div class="py" style="font-size:0.9rem;color:var(--accent);font-style:normal">${c.pinyin || '—'}</div>
         ${c.hanzi ? `<div class="py">${c.hanzi}</div>` : ''}
         ${c.variants && c.variants.length ? `<div class="py" style="color:var(--gold);font-size:0.75rem">${c.variants.join(' · ')}</div>` : ''}
         ${tagsHtml}
       </div>
-      <div class="score">✓ ${c.reviewCount||0}</div>
-      <button class="btn-del" onclick="deleteCard(${c.id})" title="Eliminar">✕</button>
+      <div class="score" style="flex-shrink:0">✓ ${c.reviewCount||0}</div>
+      <button class="btn-del" onclick="event.stopPropagation();deleteCard(${c.id})" title="Eliminar">✕</button>
     </div>
   `}).join('');
 }
