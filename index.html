@@ -550,6 +550,109 @@
   }
   .rename-row input { flex: 1; font-size: 0.85rem; }
 
+  /* ── Tags múltiples ─────────────────────────────────────────────── */
+  .tags-input-wrap {
+    display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center;
+    border: 1.5px solid var(--border); background: var(--card-bg);
+    padding: 0.4rem 0.6rem; cursor: text; min-height: 2.5rem;
+  }
+  .tags-input-wrap:focus-within { border-color: var(--ink); }
+  .tag-chip {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0.2rem 0.5rem; background: var(--ink); color: var(--paper);
+    border: none; white-space: nowrap;
+  }
+  .tag-chip .chip-del {
+    background: none; border: none; color: var(--paper); cursor: pointer;
+    font-size: 0.75rem; padding: 0; line-height: 1; opacity: 0.7;
+  }
+  .tag-chip .chip-del:hover { opacity: 1; }
+  .tags-input-wrap input[type=text] {
+    border: none; background: transparent; outline: none; padding: 0;
+    font-family: 'DM Mono', monospace; font-size: 0.85rem; color: var(--ink);
+    width: 120px; flex: 1; min-width: 80px;
+  }
+  .tags-dropdown {
+    position: absolute; z-index: 50; background: var(--card-bg);
+    border: 1.5px solid var(--border); max-height: 160px; overflow-y: auto;
+    width: 100%; top: 100%; left: 0; box-shadow: 3px 3px 0 var(--border);
+  }
+  .tags-dropdown-item {
+    padding: 0.4rem 0.7rem; font-size: 0.8rem; cursor: pointer;
+    font-family: 'DM Mono', monospace;
+  }
+  .tags-dropdown-item:hover { background: var(--border); }
+  .tags-field-wrap { position: relative; }
+
+  /* ── Vista tabla (Colección) ─────────────────────────────────────── */
+  .view-toggle-bar {
+    display: flex; gap: 0.4rem; margin-bottom: 1rem; align-items: center;
+  }
+  .view-toggle-btn {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.4rem 0.9rem;
+    border: 1.5px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+  }
+  .view-toggle-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .cards-table {
+    width: 100%; border-collapse: collapse; font-size: 0.78rem;
+    font-family: 'DM Mono', monospace;
+  }
+  .cards-table th {
+    text-align: left; font-size: 0.63rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); padding: 0.5rem 0.6rem;
+    border-bottom: 2px solid var(--border); white-space: nowrap; cursor: pointer;
+    user-select: none;
+  }
+  .cards-table th:hover { color: var(--ink); }
+  .cards-table th.sorted { color: var(--ink); }
+  .cards-table td {
+    padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .cards-table tr:hover td { background: rgba(180,160,120,0.08); }
+  .cards-table td.hanzi-cell {
+    font-family: 'Noto Serif SC', serif; font-size: 1.1rem;
+    white-space: nowrap;
+  }
+  .cards-table td.pinyin-cell { color: var(--accent); white-space: nowrap; }
+  .cards-table td.score-cell { text-align: center; color: var(--muted); font-size: 0.7rem; }
+  .cards-table td.check-cell { width: 1.5rem; text-align: center; }
+
+  /* ── Acciones en lote ────────────────────────────────────────────── */
+  .bulk-bar {
+    display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    padding: 0.7rem 0.9rem; background: var(--ink); color: var(--paper);
+    margin-bottom: 0.8rem; font-size: 0.72rem; letter-spacing: 0.08em;
+  }
+  .bulk-bar.visible { display: flex; }
+  .bulk-bar select, .bulk-bar input {
+    font-size: 0.75rem; padding: 0.3rem 0.5rem; background: var(--paper);
+    color: var(--ink); border: none; font-family: 'DM Mono', monospace;
+    width: auto;
+  }
+  .bulk-btn {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.35rem 0.8rem; border: 1.5px solid var(--paper);
+    background: transparent; color: var(--paper); cursor: pointer; transition: all 0.2s;
+  }
+  .bulk-btn:hover { background: var(--paper); color: var(--ink); }
+  .bulk-btn.danger { border-color: var(--accent); color: #ff9999; }
+  .bulk-btn.danger:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* ── Toggle OR/AND en filtros ────────────────────────────────────── */
+  .filter-mode-toggle {
+    font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.08em;
+    padding: 0.25rem 0.6rem; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer;
+    transition: all 0.2s; text-transform: uppercase;
+  }
+  .filter-mode-toggle.and-mode { background: var(--gold); color: white; border-color: var(--gold); }
+
 </style>
 </head>
 <body>
@@ -597,9 +700,15 @@
     <input id="inp-notes" type="text" placeholder="Ej: tono 3+3, saludo informal">
   </div>
   <div class="field-group">
-    <label>Categoría (opcional)</label>
-    <input id="inp-tag" type="text" placeholder="Ej: saludos, números, familia..." list="tag-suggestions" autocomplete="off">
-    <datalist id="tag-suggestions"></datalist>
+    <label>Categorías (opcional) <span style="color:var(--muted);font-size:0.65rem">— escribe y pulsa Enter o coma</span></label>
+    <div class="tags-field-wrap">
+      <div class="tags-input-wrap" id="tags-input-wrap-inp" onclick="document.getElementById('inp-tag-text').focus()">
+        <div id="inp-tags-chips" style="display:contents"></div>
+        <input type="text" id="inp-tag-text" placeholder="saludos, preguntas..." autocomplete="off"
+          oninput="tagsInputChange('inp')" onkeydown="tagsInputKeydown(event,'inp')">
+      </div>
+      <div class="tags-dropdown" id="inp-tag-dropdown" style="display:none"></div>
+    </div>
   </div>
   <div class="btn-row">
     <button class="btn btn-primary" onclick="addCard()">Guardar tarjeta</button>
@@ -614,11 +723,31 @@
     <label class="btn btn-secondary" style="cursor:pointer">↑ Importar <input type="file" accept=".json" style="display:none" onchange="importCards(event)"></label>
     <span class="unsaved-warn" id="unsaved-warn"></span>
   </div>
+  <div class="view-toggle-bar">
+    <button class="view-toggle-btn active" id="toggle-cards-btn" onclick="setListView('cards')">≡ Tarjetas</button>
+    <button class="view-toggle-btn" id="toggle-table-btn" onclick="setListView('table')">⊞ Tabla</button>
+  </div>
   <div class="filter-row" id="filter-row"></div>
   <div class="search-box">
     <input id="search-inp" type="text" placeholder="Buscar hanzi, pinyin o traducción..." oninput="renderList()">
   </div>
+  <div class="bulk-bar" id="bulk-bar">
+    <span id="bulk-count">0 seleccionadas</span>
+    <select id="bulk-action">
+      <option value="">— Acción en lote —</option>
+      <option value="add-tag">Añadir categoría</option>
+      <option value="remove-tag">Quitar categoría</option>
+      <option value="delete">Eliminar</option>
+    </select>
+    <input type="text" id="bulk-tag-input" placeholder="categoría..." style="display:none" list="bulk-tag-dl" autocomplete="off">
+    <datalist id="bulk-tag-dl"></datalist>
+    <button class="bulk-btn" onclick="applyBulkAction()">Aplicar</button>
+    <button class="bulk-btn" onclick="clearSelection()" style="margin-left:auto">✕ Cancelar</button>
+  </div>
   <div class="card-list" id="card-list"></div>
+  <div class="table-wrap" id="table-wrap" style="display:none">
+    <table class="cards-table" id="cards-table"></table>
+  </div>
 </div>
 
 <div id="view-progress" class="view">
@@ -682,13 +811,6 @@ const STORAGE_KEY = 'hanzicards_v1';
 const JB_KEY_STORAGE = 'jb_api_key';
 const JB_BIN_STORAGE = 'jb_bin_id';
 
-function loadCards() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-}
-
 function saveCards(cards) {
   const payload = { cards, updatedAt: Date.now() };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -703,8 +825,27 @@ function loadCards() {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     // Support both old format (array) and new format ({cards, updatedAt})
-    return Array.isArray(parsed) ? parsed : (parsed.cards || []);
+    const arr = Array.isArray(parsed) ? parsed : (parsed.cards || []);
+    // Migrar tag (string) → tags (array)
+    return arr.map(c => {
+      if (!c.tags) {
+        c.tags = c.tag ? [c.tag] : [];
+        delete c.tag;
+      }
+      return c;
+    });
   } catch { return []; }
+}
+
+// ── Migración tag→tags ───────────────────────────────────────────────────────
+function migrateTags(arr) {
+  return arr.map(c => {
+    if (!c.tags) {
+      c.tags = c.tag ? [c.tag] : [];
+      delete c.tag;
+    }
+    return c;
+  });
 }
 
 // ── JSONBin sync ──────────────────────────────────────────────────────────────
@@ -802,9 +943,9 @@ async function syncFromCloud() {
     if (!res.ok) throw new Error('Error al leer bin');
     const data = await res.json();
     const record = data.record;
-    const cloudCards = Array.isArray(record) ? record : record.cards;
-    if (!Array.isArray(cloudCards)) throw new Error('Formato incorrecto');
-    cards = cloudCards;
+    const rawCloudCards = Array.isArray(record) ? record : record.cards;
+    if (!Array.isArray(rawCloudCards)) throw new Error('Formato incorrecto');
+    cards = migrateTags(rawCloudCards);
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards, updatedAt: Array.isArray(record) ? 0 : (record.updatedAt || 0) }));
     statusEl.innerHTML = `<span style="color:var(--green)">✓ ${cards.length} tarjetas bajadas</span>`;
     showToast(`✓ ${cards.length} tarjetas cargadas desde la nube`);
@@ -828,9 +969,9 @@ async function autoLoadFromCloud() {
     if (!res.ok) return;
     const data = await res.json();
     const record = data.record;
-    const cloudCards = Array.isArray(record) ? record : record.cards;
+    const rawCards2 = Array.isArray(record) ? record : record.cards;
     const cloudTs = Array.isArray(record) ? 0 : (record.updatedAt || 0);
-    if (!Array.isArray(cloudCards)) return;
+    if (!Array.isArray(rawCards2)) return;
 
     // Get local timestamp
     let localTs = 0;
@@ -844,7 +985,7 @@ async function autoLoadFromCloud() {
 
     // Cloud wins if it's newer
     if (cloudTs >= localTs) {
-      cards = cloudCards;
+      cards = migrateTags(rawCards2);
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards, updatedAt: cloudTs }));
     }
   } catch(e) { console.warn('Auto-load failed:', e); }
@@ -946,15 +1087,16 @@ function normalizeTag(tag) {
 function findExistingTag(rawTag) {
   if (!rawTag) return rawTag;
   const norm = normalizeTag(rawTag);
-  const existing = [...new Set(cards.map(c => c.tag).filter(Boolean))];
+  const existing = getTags();
   const match = existing.find(t => normalizeTag(t) === norm);
-  return match || rawTag;
+  return match || rawTag.trim();
 }
 
 function updateTagSuggestions() {
-  const dl = document.getElementById('tag-suggestions');
+  // Mantener datalist de bulk para compatibilidad
+  const dl = document.getElementById('bulk-tag-dl');
   if (!dl) return;
-  const tags = [...new Set(cards.map(c => c.tag).filter(Boolean))];
+  const tags = getTags();
   dl.innerHTML = tags.map(t => `<option value="${t}">`).join('');
 }
 
@@ -978,7 +1120,7 @@ function showDuplicateModal(dups, onConfirm) {
     <div class="dup-card">
       <strong>${c.translation}</strong> · <span style="color:var(--accent)">${c.pinyin||''}</span>
       ${c.hanzi ? ` · <span style="font-family:'Noto Serif SC',serif">${c.hanzi}</span>` : ''}
-      ${c.tag ? ` <span class="tag-pill">${c.tag}</span>` : ''}
+      ${(c.tags||[]).map(t => `<span class="tag-pill">${t}</span>`).join(' ')}
     </div>
   `).join('');
 
@@ -1006,18 +1148,15 @@ function addCard() {
   const translation = document.getElementById('inp-translation').value.trim();
   const hanzi = document.getElementById('inp-hanzi').value.trim();
   const notes = document.getElementById('inp-notes').value.trim();
-  const tag = findExistingTag(document.getElementById('inp-tag').value.trim());
   const variants = getVariants();
 
   if (!pinyin || !translation) { showToast('¡Falta el pinyin o la traducción!', '#c0392b'); return; }
 
-  // Update tag field in case it was normalized
-  document.getElementById('inp-tag').value = tag;
-
   const doSave = () => {
     const card = {
       id: Date.now(),
-      hanzi, pinyin, translation, notes, tag,
+      hanzi, pinyin, translation, notes,
+      tags: getTagsFromInput('inp'),
       variants,
       score: 0,
       nextReview: Date.now(),
@@ -1251,13 +1390,87 @@ async function fetchHanzi(pinyin, translation) {
   return '';
 }
 
+// Estado tags por contexto (inp = formulario añadir, edit-ID = edición inline)
+const _tagsState = {};
+
+function getTagsFromInput(ctx) {
+  return (_tagsState[ctx] || []).slice();
+}
+
+function setTagsForInput(ctx, tagsArr) {
+  _tagsState[ctx] = tagsArr ? tagsArr.slice() : [];
+  renderTagChips(ctx);
+}
+
+function renderTagChips(ctx) {
+  const wrapId = ctx === 'inp' ? 'inp-tags-chips' : `edit-tags-chips-${ctx.replace('edit-','')}`;
+  const el = document.getElementById(wrapId);
+  if (!el) return;
+  const tags = _tagsState[ctx] || [];
+  el.innerHTML = tags.map((t, i) => `
+    <span class="tag-chip">${t}<button class="chip-del" onclick="removeTagFromInput('${ctx}',${i})" title="Quitar">✕</button></span>
+  `).join('');
+}
+
+function removeTagFromInput(ctx, idx) {
+  if (!_tagsState[ctx]) return;
+  _tagsState[ctx].splice(idx, 1);
+  renderTagChips(ctx);
+}
+
+function tagsInputChange(ctx) {
+  const inputId = ctx === 'inp' ? 'inp-tag-text' : `edit-tag-text-${ctx.replace('edit-','')}`;
+  const dropId  = ctx === 'inp' ? 'inp-tag-dropdown' : `edit-tag-dropdown-${ctx.replace('edit-','')}`;
+  const inp = document.getElementById(inputId);
+  const drop = document.getElementById(dropId);
+  if (!inp || !drop) return;
+  const val = inp.value.trim().toLowerCase();
+  if (!val) { drop.style.display = 'none'; return; }
+  const existing = getTags().filter(t => t.toLowerCase().includes(val) && !(_tagsState[ctx]||[]).includes(t));
+  if (existing.length === 0) { drop.style.display = 'none'; return; }
+  drop.innerHTML = existing.map(t => `<div class="tags-dropdown-item" onclick="addTagToInput('${ctx}','${t.replace(/'/g,"\'")}')">+ ${t}</div>`).join('');
+  drop.style.display = 'block';
+}
+
+function tagsInputKeydown(event, ctx) {
+  const inputId = ctx === 'inp' ? 'inp-tag-text' : `edit-tag-text-${ctx.replace('edit-','')}`;
+  const dropId  = ctx === 'inp' ? 'inp-tag-dropdown' : `edit-tag-dropdown-${ctx.replace('edit-','')}`;
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  if (event.key === 'Enter' || event.key === ',' || event.key === 'Tab') {
+    event.preventDefault();
+    const val = inp.value.replace(/,/g,'').trim();
+    if (val) addTagToInput(ctx, val);
+    const drop = document.getElementById(dropId);
+    if (drop) drop.style.display = 'none';
+  } else if (event.key === 'Backspace' && inp.value === '') {
+    if (!_tagsState[ctx] || _tagsState[ctx].length === 0) return;
+    _tagsState[ctx].pop();
+    renderTagChips(ctx);
+  }
+}
+
+function addTagToInput(ctx, rawTag) {
+  const tag = findExistingTag(rawTag);
+  if (!_tagsState[ctx]) _tagsState[ctx] = [];
+  if (!_tagsState[ctx].includes(tag)) _tagsState[ctx].push(tag);
+  const inputId = ctx === 'inp' ? 'inp-tag-text' : `edit-tag-text-${ctx.replace('edit-','')}`;
+  const dropId  = ctx === 'inp' ? 'inp-tag-dropdown' : `edit-tag-dropdown-${ctx.replace('edit-','')}`;
+  const inp = document.getElementById(inputId);
+  const drop = document.getElementById(dropId);
+  if (inp) inp.value = '';
+  if (drop) drop.style.display = 'none';
+  renderTagChips(ctx);
+}
+
 function clearForm() {
-  const lastTag = document.getElementById('inp-tag').value; // preserve category
+  const lastTags = getTagsFromInput('inp'); // preserve categories
   ['inp-hanzi','inp-pinyin','inp-translation','inp-notes'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('pinyin-preview').textContent = '';
-  document.getElementById('inp-tag').value = lastTag; // restore category
+  setTagsForInput('inp', lastTags); // restore categories
+  document.getElementById('inp-tag-text').value = '';
   document.getElementById('variants-container').innerHTML = '';
   document.getElementById('inp-pinyin').focus();
 }
@@ -1266,16 +1479,24 @@ function clearForm() {
 let reviewQueue = [];
 let currentIdx = 0;
 let flipped = false;
-let reviewCatFilter = 'all';
+let reviewCatFilter = [];   // array de tags seleccionados ([] = todas)
+let reviewFilterMode = 'OR'; // 'OR' o 'AND'
 let attemptCount = 0; // counts pinyin attempts per card
+
+function cardMatchesReviewFilter(c) {
+  if (reviewCatFilter.length === 0) return true;
+  const cardTags = c.tags || [];
+  if (reviewFilterMode === 'OR') {
+    return reviewCatFilter.some(t => cardTags.includes(t));
+  } else {
+    return reviewCatFilter.every(t => cardTags.includes(t));
+  }
+}
 
 function getReviewQueue() {
   const now = Date.now();
   return cards
-    .filter(c => {
-      const matchCat = reviewCatFilter === 'all' || c.tag === reviewCatFilter;
-      return c.nextReview <= now && matchCat;
-    })
+    .filter(c => c.nextReview <= now && cardMatchesReviewFilter(c))
     .sort(() => Math.random() - 0.5)
     .map(c => ({ ...c, _dir: Math.random() < 0.5 ? 'es→zh' : 'zh→es' }));
 }
@@ -1289,19 +1510,34 @@ function startReview() {
   renderReview();
 }
 
-function setReviewFilter(tag) {
-  reviewCatFilter = tag;
+function toggleReviewFilter(tag) {
+  if (tag === 'all') {
+    reviewCatFilter = [];
+  } else {
+    const idx = reviewCatFilter.indexOf(tag);
+    if (idx >= 0) reviewCatFilter.splice(idx, 1);
+    else reviewCatFilter.push(tag);
+  }
+  startReview();
+}
+
+function toggleReviewFilterMode() {
+  reviewFilterMode = reviewFilterMode === 'OR' ? 'AND' : 'OR';
   startReview();
 }
 
 function renderReviewFilterBar() {
   const tags = getTags();
   if (tags.length === 0) return '';
+  const allActive = reviewCatFilter.length === 0;
+  const modeBtn = reviewCatFilter.length > 1
+    ? `<button class="filter-mode-toggle ${reviewFilterMode==='AND'?'and-mode':''}" onclick="toggleReviewFilterMode()" title="Cambiar modo: OR=cualquier categoría, AND=todas las categorías">${reviewFilterMode}</button>`
+    : '';
   const pills = [
-    `<button class="filter-pill ${reviewCatFilter==='all'?'active':''}" onclick="setReviewFilter('all')">Todas</button>`,
-    ...tags.map(t => `<button class="filter-pill ${reviewCatFilter===t?'active':''}" onclick="setReviewFilter('${t}')">${t}</button>`)
+    `<button class="filter-pill ${allActive?'active':''}" onclick="toggleReviewFilter('all')">Todas</button>`,
+    ...tags.map(t => `<button class="filter-pill ${reviewCatFilter.includes(t)?'active':''}" onclick="toggleReviewFilter('${t.replace(/'/g,"\'")}')">${t}</button>`)
   ].join('');
-  return `<div class="review-filter-bar"><span class="label">Categoría:</span>${pills}</div>`;
+  return `<div class="review-filter-bar"><span class="label">Categoría:</span>${pills}${modeBtn}</div>`;
 }
 
 function renderReview() {
@@ -1318,13 +1554,14 @@ function renderReview() {
   const filterBar = renderReviewFilterBar();
 
   if (reviewQueue.length === 0) {
-    const catCards = reviewCatFilter === 'all' ? cards : cards.filter(c => c.tag === reviewCatFilter);
+    const catCards = cards.filter(c => cardMatchesReviewFilter(c));
+    const filterLabel = reviewCatFilter.length > 0 ? ` en <strong>${reviewCatFilter.join(reviewFilterMode==='AND'?' + ':' / ')}</strong>` : '';
     el.innerHTML = `
       ${filterBar}
       <div class="session-done">
         <span class="big">✓</span>
-        <p>¡Al día! No hay tarjetas pendientes${reviewCatFilter !== 'all' ? ` en <strong>${reviewCatFilter}</strong>` : ''}.<br>Añade más o vuelve más tarde.</p>
-        <button class="btn btn-secondary" onclick="reviewQueue=((reviewCatFilter==='all'?cards:cards.filter(c=>c.tag===reviewCatFilter)).slice().sort(()=>Math.random()-0.5).map(c=>({...c,_dir:Math.random()<0.5?'es→zh':'zh→es'})));currentIdx=0;renderReview()">Repasar todas igualmente</button>
+        <p>¡Al día! No hay tarjetas pendientes${filterLabel}.<br>Añade más o vuelve más tarde.</p>
+        <button class="btn btn-secondary" onclick="reviewQueue=cards.filter(c=>cardMatchesReviewFilter(c)).slice().sort(()=>Math.random()-0.5).map(c=>({...c,_dir:Math.random()<0.5?'es→zh':'zh→es'}));currentIdx=0;renderReview()">Repasar todas igualmente</button>
       </div>`;
     return;
   }
@@ -1380,7 +1617,7 @@ function renderReview() {
     <div class="stats-bar">
       <span>Pendientes: <b>${reviewQueue.length - currentIdx}</b></span>
       <span>${dirLabel}</span>
-      <span>${card.tag ? '📂 ' + card.tag : ''}</span>
+      <span>${card.tags && card.tags.length ? '📂 ' + card.tags.join(' · ') : ''}</span>
     </div>
     <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
     <div class="flip-hint">Clic para voltear</div>
@@ -1478,11 +1715,35 @@ function rate(result) {
 }
 
 // ── List ──────────────────────────────────────────────────────────────────────
-let activeFilter = 'all';
-
 function getTags() {
-  const tags = [...new Set(cards.map(c => c.tag).filter(Boolean))];
-  return tags;
+  const set = new Set();
+  cards.forEach(c => (c.tags || []).forEach(t => t && set.add(t)));
+  return [...set].sort();
+}
+
+let activeFilter = [];      // array de tags activos en Colección
+let activeFilterMode = 'OR';
+let listView = 'cards';     // 'cards' | 'table'
+let sortCol = null;
+let sortDir = 1;
+let selectedIds = new Set();
+
+function setListView(v) {
+  listView = v;
+  document.getElementById('toggle-cards-btn').classList.toggle('active', v === 'cards');
+  document.getElementById('toggle-table-btn').classList.toggle('active', v === 'table');
+  document.getElementById('card-list').style.display = v === 'cards' ? '' : 'none';
+  document.getElementById('table-wrap').style.display = v === 'table' ? '' : 'none';
+  selectedIds.clear();
+  updateBulkBar();
+  renderList();
+}
+
+function cardMatchesListFilter(c) {
+  if (activeFilter.length === 0) return true;
+  const cardTags = c.tags || [];
+  if (activeFilterMode === 'OR') return activeFilter.some(t => cardTags.includes(t));
+  return activeFilter.every(t => cardTags.includes(t));
 }
 
 function renderList() {
@@ -1493,40 +1754,187 @@ function renderList() {
 
   // Render filter pills
   const tags = getTags();
+  const allActive = activeFilter.length === 0;
+  const modeToggle = activeFilter.length > 1
+    ? `<button class="filter-mode-toggle ${activeFilterMode==='AND'?'and-mode':''}" onclick="toggleListFilterMode()" title="OR = cualquier categoría · AND = todas">${activeFilterMode}</button>`
+    : '';
   filterRow.innerHTML = `
-    <button class="filter-pill ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">Todas</button>
-    ${tags.map(t => `<button class="filter-pill ${activeFilter===t?'active':''}" onclick="setFilter('${t}')">${t}</button>`).join('')}
+    <button class="filter-pill ${allActive?'active':''}" onclick="toggleFilter('all')">Todas</button>
+    ${tags.map(t => `<button class="filter-pill ${activeFilter.includes(t)?'active':''}" onclick="toggleFilter('${t.replace(/'/g,"\'")}')">${t}</button>`).join('')}
+    ${modeToggle}
   `;
 
   const filtered = cards.filter(c => {
-    const matchTag = activeFilter === 'all' || c.tag === activeFilter;
-    if (!searchRaw) return matchTag;
+    if (!cardMatchesListFilter(c)) return false;
+    if (!searchRaw) return true;
     const matchHanzi = (c.hanzi||'').includes(searchRaw);
     const matchPinyin = stripTones(c.pinyin||'').includes(searchStripped);
     const matchTrans = (c.translation||'').toLowerCase().includes(searchRaw);
     const matchVariants = (c.variants||[]).some(v => stripTones(v).includes(searchStripped));
-    return matchTag && (matchHanzi || matchPinyin || matchTrans || matchVariants);
+    const matchTags = (c.tags||[]).some(t => t.toLowerCase().includes(searchRaw));
+    return matchHanzi || matchPinyin || matchTrans || matchVariants || matchTags;
   });
 
-  if (filtered.length === 0) {
+  // Ordenar si hay sortCol activo
+  let sorted = filtered.slice();
+  if (sortCol) {
+    sorted.sort((a, b) => {
+      let va = sortCol === 'score' ? (a.score||0) : (sortCol === 'reviewCount' ? (a.reviewCount||0) : (a[sortCol]||'').toString().toLowerCase());
+      let vb = sortCol === 'score' ? (b.score||0) : (sortCol === 'reviewCount' ? (b.reviewCount||0) : (b[sortCol]||'').toString().toLowerCase());
+      if (va < vb) return -sortDir;
+      if (va > vb) return sortDir;
+      return 0;
+    });
+  }
+
+  if (listView === 'table') {
+    renderTable(sorted);
+    return;
+  }
+
+  if (sorted.length === 0) {
     el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:2rem;font-size:0.8rem;">Sin resultados</div>`;
     return;
   }
 
-  el.innerHTML = filtered.map(c => `
+  el.innerHTML = sorted.map(c => {
+    const tagsHtml = (c.tags||[]).map(t => `<span class="tag-pill">${t}</span>`).join(' ');
+    const checked = selectedIds.has(c.id) ? 'checked' : '';
+    return `
     <div class="card-row" id="row-${c.id}">
+      <input type="checkbox" ${checked} onchange="toggleSelect(${c.id},this.checked)"
+        onclick="event.stopPropagation()" style="margin-right:0.2rem;cursor:pointer;flex-shrink:0">
       <div class="info" onclick="editCard(${c.id})" style="cursor:pointer;flex:1">
         <div class="tr" style="font-weight:500">${c.translation}</div>
         <div class="py" style="font-size:0.9rem;color:var(--accent);font-style:normal">${c.pinyin || '—'}</div>
         ${c.hanzi ? `<div class="py">${c.hanzi}</div>` : ''}
         ${c.variants && c.variants.length ? `<div class="py" style="color:var(--gold);font-size:0.75rem">${c.variants.join(' · ')}</div>` : ''}
-        ${c.tag ? `<span class="tag-pill">${c.tag}</span>` : ''}
+        ${tagsHtml}
       </div>
       <div class="score">✓ ${c.reviewCount||0}</div>
       <button class="btn-del" onclick="deleteCard(${c.id})" title="Eliminar">✕</button>
     </div>
-  `).join('');
+  `}).join('');
 }
+
+function renderTable(filtered) {
+  const tbl = document.getElementById('cards-table');
+  if (!tbl) return;
+  const allChecked = filtered.length > 0 && filtered.every(c => selectedIds.has(c.id));
+  const cols = [
+    { key: 'check', label: `<input type="checkbox" ${allChecked?'checked':''} onchange="selectAll(this.checked,filteredIds)" style="cursor:pointer">`, sortable: false },
+    { key: 'translation', label: 'Traducción', sortable: true },
+    { key: 'pinyin', label: 'Pīnyīn', sortable: true },
+    { key: 'hanzi', label: '汉字', sortable: false },
+    { key: 'tags', label: 'Categorías', sortable: false },
+    { key: 'notes', label: 'Notas', sortable: false },
+    { key: 'score', label: 'Score', sortable: true },
+    { key: 'actions', label: '', sortable: false },
+  ];
+  const filteredIds = filtered.map(c => c.id);
+  const arrow = col => col.key === sortCol ? (sortDir > 0 ? ' ↑' : ' ↓') : '';
+  const thead = `<thead><tr>${cols.map(col =>
+    `<th class="${col.key==='check'?'check-cell':''} ${col.key===sortCol?'sorted':''}"
+      ${col.sortable ? `onclick="setSortCol('${col.key}')" style="cursor:pointer"` : ''}
+      >${col.label}${col.sortable ? arrow(col) : ''}</th>`
+  ).join('')}</tr></thead>`;
+
+  const tbody = `<tbody>${filtered.map(c => {
+    const tagsHtml = (c.tags||[]).map(t => `<span class="tag-pill" style="margin-right:2px">${t}</span>`).join('');
+    const checked = selectedIds.has(c.id) ? 'checked' : '';
+    const scoreColor = (c.score||0) >= 2 ? 'var(--green)' : (c.score||0) >= 0.5 ? 'var(--gold)' : 'var(--accent)';
+    return `<tr>
+      <td class="check-cell"><input type="checkbox" ${checked} onchange="toggleSelect(${c.id},this.checked)" style="cursor:pointer"></td>
+      <td style="font-weight:500;min-width:120px">${c.translation||'—'}</td>
+      <td class="pinyin-cell">${c.pinyin||'—'}</td>
+      <td class="hanzi-cell">${c.hanzi||''}</td>
+      <td style="min-width:100px">${tagsHtml}</td>
+      <td style="font-size:0.75rem;color:var(--muted)">${c.notes||''}</td>
+      <td class="score-cell" style="color:${scoreColor}">${(c.score||0).toFixed(1)}</td>
+      <td><button class="btn-del" onclick="editCard(${c.id})" title="Editar" style="color:var(--muted)">✎</button>
+          <button class="btn-del" onclick="deleteCard(${c.id})" title="Eliminar">✕</button></td>
+    </tr>`;
+  }).join('')}</tbody>`;
+
+  tbl.innerHTML = thead + tbody;
+  // Guardar filteredIds en closure para el checkbox de cabecera
+  tbl.querySelector('thead input[type=checkbox]').onchange = function() { selectAll(this.checked, filteredIds); };
+}
+
+function setSortCol(col) {
+  if (sortCol === col) sortDir = -sortDir;
+  else { sortCol = col; sortDir = 1; }
+  renderList();
+}
+
+function toggleSelect(id, checked) {
+  if (checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  updateBulkBar();
+}
+
+function selectAll(checked, ids) {
+  ids.forEach(id => { if (checked) selectedIds.add(id); else selectedIds.delete(id); });
+  updateBulkBar();
+  renderList();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  updateBulkBar();
+  renderList();
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  const countEl = document.getElementById('bulk-count');
+  const n = selectedIds.size;
+  if (n > 0) {
+    bar.classList.add('visible');
+    if (countEl) countEl.textContent = `${n} tarjeta${n>1?'s':''} seleccionada${n>1?'s':''}`;
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function applyBulkAction() {
+  const action = document.getElementById('bulk-action').value;
+  const tagInput = document.getElementById('bulk-tag-input').value.trim();
+  if (!action) { showToast('Elige una acción', '#b8860b'); return; }
+  if ((action === 'add-tag' || action === 'remove-tag') && !tagInput) {
+    showToast('Escribe una categoría', '#b8860b'); return;
+  }
+  const tag = action !== 'delete' ? findExistingTag(tagInput) : null;
+  const affected = cards.filter(c => selectedIds.has(c.id));
+  if (action === 'delete') {
+    if (!confirm(`¿Eliminar ${affected.length} tarjeta${affected.length>1?'s':''}? Esta acción no se puede deshacer.`)) return;
+    cards = cards.filter(c => !selectedIds.has(c.id));
+  } else if (action === 'add-tag') {
+    affected.forEach(c => {
+      if (!c.tags) c.tags = [];
+      if (!c.tags.includes(tag)) c.tags.push(tag);
+    });
+  } else if (action === 'remove-tag') {
+    affected.forEach(c => {
+      if (c.tags) c.tags = c.tags.filter(t => t !== tag);
+    });
+  }
+  saveCards(cards);
+  updateTagSuggestions();
+  selectedIds.clear();
+  updateBulkBar();
+  renderList();
+  renderProgress();
+  showToast(`✓ ${action === 'delete' ? 'Eliminadas' : 'Actualizadas'} ${affected.length} tarjetas`);
+}
+
+// Mostrar/ocultar input de tag según acción seleccionada
+document.addEventListener('change', e => {
+  if (e.target.id === 'bulk-action') {
+    const show = e.target.value === 'add-tag' || e.target.value === 'remove-tag';
+    document.getElementById('bulk-tag-input').style.display = show ? '' : 'none';
+  }
+});
 
 function editCard(id) {
   const card = cards.find(c => c.id === id);
@@ -1545,8 +1953,9 @@ function editCard(id) {
     </div>
   `).join('');
 
-  const tags = [...new Set(cards.map(c => c.tag).filter(Boolean))];
-  const tagOptions = tags.map(t => `<option value="${t}">`).join('');
+  // Inicializar estado de tags para edición
+  const editCtx = `edit-${id}`;
+  setTagsForInput(editCtx, card.tags || []);
 
   row.innerHTML = `
     <div class="edit-form" style="width:100%;padding:0.3rem 0">
@@ -1576,9 +1985,15 @@ function editCard(id) {
         <input id="edit-notes-${id}" type="text" value="${card.notes||''}" style="font-size:0.9rem;padding:0.4rem 0.6rem">
       </div>
       <div class="field-group" style="margin-bottom:0.8rem">
-        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Categoría</label>
-        <input id="edit-tag-${id}" type="text" value="${card.tag||''}" list="edit-tag-dl-${id}" autocomplete="off" style="font-size:0.9rem;padding:0.4rem 0.6rem">
-        <datalist id="edit-tag-dl-${id}">${tagOptions}</datalist>
+        <label style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">Categorías <span style="font-size:0.6rem;color:var(--muted)">(Enter o coma para añadir)</span></label>
+        <div class="tags-field-wrap">
+          <div class="tags-input-wrap" id="tags-input-wrap-edit-${id}" onclick="document.getElementById('edit-tag-text-${id}').focus()">
+            <div id="edit-tags-chips-${id}" style="display:contents"></div>
+            <input type="text" id="edit-tag-text-${id}" placeholder="categoría..." autocomplete="off"
+              oninput="tagsInputChange('edit-${id}')" onkeydown="tagsInputKeydown(event,'edit-${id}')">
+          </div>
+          <div class="tags-dropdown" id="edit-tag-dropdown-${id}" style="display:none"></div>
+        </div>
       </div>
       <div style="display:flex;gap:0.5rem">
         <button class="btn btn-primary" style="font-size:0.72rem" onclick="saveEdit(${id})">Guardar</button>
@@ -1586,6 +2001,8 @@ function editCard(id) {
       </div>
     </div>
   `;
+  // Renderizar chips después de insertar el HTML
+  setTimeout(() => renderTagChips('edit-' + id), 0);
 }
 
 function addEditVariantRow(id) {
@@ -1644,7 +2061,7 @@ function saveEdit(id) {
   card.pinyin      = convertTones(rawPinyin).trim();
   card.hanzi       = document.getElementById(`edit-hanzi-${id}`).value.trim();
   card.notes       = document.getElementById(`edit-notes-${id}`).value.trim();
-  card.tag         = findExistingTag(document.getElementById(`edit-tag-${id}`).value.trim());
+  card.tags        = getTagsFromInput(`edit-${id}`);
   // variants
   const varContainer = document.getElementById(`edit-variants-${id}`);
   if (varContainer) {
@@ -1657,8 +2074,19 @@ function saveEdit(id) {
   showToast('✓ Tarjeta actualizada');
 }
 
-function setFilter(f) {
-  activeFilter = f;
+function toggleFilter(tag) {
+  if (tag === 'all') {
+    activeFilter = [];
+  } else {
+    const idx = activeFilter.indexOf(tag);
+    if (idx >= 0) activeFilter.splice(idx, 1);
+    else activeFilter.push(tag);
+  }
+  renderList();
+}
+
+function toggleListFilterMode() {
+  activeFilterMode = activeFilterMode === 'OR' ? 'AND' : 'OR';
   renderList();
 }
 
@@ -1701,9 +2129,11 @@ function importCards(event) {
     try {
       const imported = JSON.parse(e.target.result);
       if (!Array.isArray(imported)) throw new Error();
+      // Migrar tag→tags en los importados
+      const migratedImport = migrateTags(imported);
       // Merge: add cards with IDs not already present
       const existingIds = new Set(cards.map(c => c.id));
-      const newCards = imported.filter(c => !existingIds.has(c.id));
+      const newCards = migratedImport.filter(c => !existingIds.has(c.id));
       cards = [...cards, ...newCards];
       saveCards(cards);
       renderList();
@@ -1923,9 +2353,9 @@ function renderProgress() {
   if (!el) return;
 
   const tags = getTags();
-  const untagged = cards.filter(c => !c.tag);
+  const untagged = cards.filter(c => !c.tags || c.tags.length === 0);
   const allGroups = [
-    ...tags.map(tag => ({ tag, cards: cards.filter(c => c.tag === tag) })),
+    ...tags.map(tag => ({ tag, cards: cards.filter(c => (c.tags||[]).includes(tag)) })),
     ...(untagged.length > 0 ? [{ tag: null, cards: untagged }] : [])
   ];
 
@@ -1999,13 +2429,14 @@ function renderRenameCatList() {
     return;
   }
   el.innerHTML = tags.map(tag => {
-    const count = cards.filter(c => c.tag === tag).length;
+    const count = cards.filter(c => (c.tags||[]).includes(tag)).length;
+    const safeId = encodeURIComponent(tag);
     return `
       <div class="rename-row">
-        <input type="text" id="rename-${encodeURIComponent(tag)}" value="${tag}" style="font-size:0.85rem;padding:0.4rem 0.6rem">
+        <input type="text" id="rename-${safeId}" value="${tag}" style="font-size:0.85rem;padding:0.4rem 0.6rem">
         <span style="font-size:0.7rem;color:var(--muted);white-space:nowrap">${count} tarj.</span>
         <button class="btn btn-secondary" style="font-size:0.65rem;white-space:nowrap;padding:0.4rem 0.7rem"
-          onclick="renameCategory('${tag}', document.getElementById('rename-${encodeURIComponent(tag)}').value)">Renombrar</button>
+          onclick="renameCategory('${tag}', document.getElementById('rename-${safeId}').value)">Renombrar</button>
       </div>`;
   }).join('');
 }
@@ -2013,8 +2444,12 @@ function renderRenameCatList() {
 function renameCategory(oldTag, newTagRaw) {
   const newTag = newTagRaw.trim();
   if (!newTag || newTag === oldTag) { showToast('Introduce un nombre diferente', '#b8860b'); return; }
-  const count = cards.filter(c => c.tag === oldTag).length;
-  cards.forEach(c => { if (c.tag === oldTag) c.tag = newTag; });
+  const count = cards.filter(c => (c.tags||[]).includes(oldTag)).length;
+  cards.forEach(c => {
+    if (!c.tags) return;
+    const idx = c.tags.indexOf(oldTag);
+    if (idx >= 0) c.tags[idx] = newTag;
+  });
   saveCards(cards);
   updateTagSuggestions();
   renderRenameCatList();
