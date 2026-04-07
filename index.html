@@ -674,8 +674,9 @@
   <div class="section-title">Nueva tarjeta</div>
   <div class="field-group">
     <label>Pīnyīn (pronunciación en chino) <span style="color:var(--accent)">*</span></label>
-    <input class="pinyin-input" id="inp-pinyin" type="text" placeholder="ni3 hao3 o nǐ hǎo" oninput="updatePinyinPreview()">
+    <input class="pinyin-input" id="inp-pinyin" type="text" placeholder="ni3 hao3 o nǐ hǎo" oninput="updatePinyinPreview()" onblur="checkPinyinDuplicate()">
     <div id="pinyin-preview" style="text-align:center;font-size:1.1rem;color:var(--accent);margin-top:0.4rem;font-family:'DM Mono',monospace;min-height:1.5rem"></div>
+    <div id="pinyin-dup-hint" style="text-align:center;font-size:0.75rem;color:var(--gold);margin-top:0.3rem;min-height:1.2rem"></div>
   </div>
   <div class="field-group">
     <label style="display:flex;justify-content:space-between;align-items:center">
@@ -1045,6 +1046,22 @@ function updatePinyinPreview() {
   const preview = document.getElementById('pinyin-preview');
   const converted = convertTones(raw);
   preview.textContent = converted !== raw ? '→ ' + converted : '';
+  // Limpiar hint al escribir
+  const hint = document.getElementById('pinyin-dup-hint');
+  if (hint) hint.textContent = '';
+}
+
+function checkPinyinDuplicate() {
+  const raw = document.getElementById('inp-pinyin').value.trim();
+  const hint = document.getElementById('pinyin-dup-hint');
+  if (!hint || !raw) return;
+  const pinyin = convertTones(raw);
+  const dups = findDuplicates(pinyin, '', null);
+  if (dups.length > 0) {
+    hint.textContent = `⚠ Ya existe: ${dups[0].translation} (${dups[0].pinyin})`;
+  } else {
+    hint.textContent = '';
+  }
 }
 
 // ── Variantes ─────────────────────────────────────────────────────────────────
@@ -1102,7 +1119,7 @@ function updateTagSuggestions() {
 
 // ── Duplicados ────────────────────────────────────────────────────────────────
 function findDuplicates(pinyin, translation, excludeId) {
-  const normPinyin = stripTones(pinyin);
+  const normPinyin = stripTones(pinyin); // normaliza tonos Y espacios
   const normTrans = translation.toLowerCase().trim();
   return cards.filter(c => {
     if (excludeId && c.id === excludeId) return false;
@@ -1352,7 +1369,7 @@ function stripTones(pinyin) {
     .replace(/[āáǎà]/g,'a').replace(/[ēéěè]/g,'e')
     .replace(/[īíǐì]/g,'i').replace(/[ōóǒò]/g,'o')
     .replace(/[ūúǔù]/g,'u').replace(/[ǖǘǚǜü]/g,'u')
-    .replace(/[1-4]/g,'').trim();
+    .replace(/[1-4]/g,'').replace(/\s+/g,'').trim();
 }
 
 async function fetchHanzi(pinyin, translation) {
@@ -1481,9 +1498,11 @@ let currentIdx = 0;
 let flipped = false;
 let reviewCatFilter = [];   // array de tags seleccionados ([] = todas)
 let reviewFilterMode = 'OR'; // 'OR' o 'AND'
+let reviewFailedOnly = false; // solo tarjetas falladas (score < 0.5)
 let attemptCount = 0; // counts pinyin attempts per card
 
 function cardMatchesReviewFilter(c) {
+  if (reviewFailedOnly && (c.score || 0) >= 0.5) return false;
   if (reviewCatFilter.length === 0) return true;
   const cardTags = c.tags || [];
   if (reviewFilterMode === 'OR') {
@@ -1513,6 +1532,9 @@ function startReview() {
 function toggleReviewFilter(tag) {
   if (tag === 'all') {
     reviewCatFilter = [];
+    reviewFailedOnly = false;
+  } else if (tag === '__failed__') {
+    reviewFailedOnly = !reviewFailedOnly;
   } else {
     const idx = reviewCatFilter.indexOf(tag);
     if (idx >= 0) reviewCatFilter.splice(idx, 1);
@@ -1528,13 +1550,19 @@ function toggleReviewFilterMode() {
 
 function renderReviewFilterBar() {
   const tags = getTags();
-  if (tags.length === 0) return '';
-  const allActive = reviewCatFilter.length === 0;
+  if (tags.length === 0 && cards.length === 0) return '';
+  const allActive = reviewCatFilter.length === 0 && !reviewFailedOnly;
+  const failedCount = cards.filter(c => (c.score || 0) < 0.5).length;
   const modeBtn = reviewCatFilter.length > 1
     ? `<button class="filter-mode-toggle ${reviewFilterMode==='AND'?'and-mode':''}" onclick="toggleReviewFilterMode()" title="Cambiar modo: OR=cualquier categoría, AND=todas las categorías">${reviewFilterMode}</button>`
     : '';
+  const failedStyle = reviewFailedOnly ? '' : 'border-color:var(--accent);color:var(--accent)';
+  const failedPill = failedCount > 0
+    ? `<button class="filter-pill ${reviewFailedOnly?'active':''}" style="${failedStyle}" onclick="toggleReviewFilter('__failed__')">&#10007; Falladas (${failedCount})</button>`
+    : '';
   const pills = [
     `<button class="filter-pill ${allActive?'active':''}" onclick="toggleReviewFilter('all')">Todas</button>`,
+    failedPill,
     ...tags.map(t => `<button class="filter-pill ${reviewCatFilter.includes(t)?'active':''}" onclick="toggleReviewFilter('${t.replace(/'/g,"\'")}')">${t}</button>`)
   ].join('');
   return `<div class="review-filter-bar"><span class="label">Categoría:</span>${pills}${modeBtn}</div>`;
@@ -1748,7 +1776,7 @@ function cardMatchesListFilter(c) {
 
 function renderList() {
   const searchRaw = (document.getElementById('search-inp')?.value || '').toLowerCase();
-  const searchStripped = stripTones(searchRaw);
+  const searchStripped = stripTones(searchRaw); // ya normaliza espacios
   const el = document.getElementById('card-list');
   const filterRow = document.getElementById('filter-row');
 
@@ -2211,7 +2239,7 @@ function pinyinToNumeric(pinyin) {
 // Build SSML with phoneme tag for accurate tones
 function buildSSML(hanzi, pinyin, rate) {
   const safe = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const rateAttr = rate && rate !== 'medium' ? ` rate="${rate}"` : '';
+  const rateAttr = rate && rate !== 'medium' ? ` rate="${rate === 'slow' ? 'x-slow' : rate}"` : '';
   const wrap = content => rateAttr ? `<prosody${rateAttr}>${content}</prosody>` : content;
   if (hanzi && pinyin) {
     const numericPinyin = pinyinToNumeric(pinyin);
@@ -2309,17 +2337,19 @@ function checkPronunciation() {
   attemptCount++;
 
   const card = reviewQueue[currentIdx];
-  // stripTones already lowercases, so comparison is case-insensitive
-  const typedStripped = stripTones(typed);
+
+  // Comparación: respeta tonos, ignora espacios
+  const normalizeForCompare = p => p.toLowerCase().replace(/\s+/g, '');
 
   const allPinyins = [card.pinyin || ''].concat(card.variants || []);
-  const allStripped = allPinyins.map(p => stripTones(p));
+  const typedNorm = normalizeForCompare(typed);
+  const allNorm = allPinyins.map(p => normalizeForCompare(p));
 
-  const isExact = allStripped.some(s => s === typedStripped);
-  const isClose = !isExact && allStripped.some(s =>
-    typedStripped.replace(/ /g,'') === s.replace(/ /g,'') ||
-    s.includes(typedStripped) || typedStripped.includes(s)
-  );
+  // Exact: tonos correctos, espacios ignorados
+  const isExact = allNorm.some(s => s === typedNorm);
+  // Close: sin tonos (mismo sonido, tono incorrecto)
+  const typedNoTones = stripTones(typed);
+  const isClose = !isExact && allNorm.some(s => stripTones(s) === typedNoTones);
 
   const el = document.getElementById('pronun-feedback');
   if (!el) return;
@@ -2331,14 +2361,14 @@ function checkPronunciation() {
 function renderMicResultOnBack(card, typed) {
   const el = document.getElementById('mic-result-back');
   if (!el) return;
-  const typedStripped = stripTones(convertTones(typed));
+  const typedConverted = convertTones(typed);
+  const normalizeForCompare = p => p.toLowerCase().replace(/\s+/g, '');
   const allPinyins = [card.pinyin || ''].concat(card.variants || []);
-  const allStripped = allPinyins.map(p => stripTones(p));
-  const isExact = allStripped.some(s => s === typedStripped);
-  const isClose = !isExact && allStripped.some(s =>
-    typedStripped.replace(/ /g,'') === s.replace(/ /g,'') ||
-    s.includes(typedStripped) || typedStripped.includes(s)
-  );
+  const typedNorm = normalizeForCompare(typedConverted);
+  const allNorm = allPinyins.map(p => normalizeForCompare(p));
+  const isExact = allNorm.some(s => s === typedNorm);
+  const typedNoTones = stripTones(typedConverted);
+  const isClose = !isExact && allNorm.some(s => stripTones(s) === typedNoTones);
   let cls, icon;
   if (isExact)      { cls = 'mic-match'; icon = '✓ ¡Correcto!'; }
   else if (isClose) { cls = 'mic-close';  icon = '△ Parecido'; }
