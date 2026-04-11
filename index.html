@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>汉字 Flashcards</title>
+<link rel="apple-touch-icon" href="icon.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Playfair+Display:wght@400;700&display=swap');
 
@@ -1056,7 +1057,9 @@ function checkPinyinDuplicate() {
   const hint = document.getElementById('pinyin-dup-hint');
   if (!hint || !raw) return;
   const pinyin = convertTones(raw);
-  const dups = findDuplicates(pinyin, '', null);
+  const normPinyin = stripTones(pinyin);
+  // Solo comparar por pinyin (no traducción) para el hint inline
+  const dups = cards.filter(c => stripTones(c.pinyin || '') === normPinyin);
   if (dups.length > 0) {
     hint.textContent = `⚠ Ya existe: ${dups[0].translation} (${dups[0].pinyin})`;
   } else {
@@ -1378,31 +1381,42 @@ async function fetchHanzi(pinyin, translation) {
   // 1. Direct lookup (whole phrase)
   if (PINYIN_DICT[key]) return PINYIN_DICT[key];
 
-  // 2. Without spaces
-  const noSpace = key.replace(/ /g, '');
-  const found = Object.entries(PINYIN_DICT).find(([k]) => k.replace(/ /g,'') === noSpace);
-  if (found) return found[1];
+  // 2. Without spaces (only for single-word lookups or short phrases)
+  const words = key.split(/\s+/);
+  if (words.length === 1) {
+    const noSpace = key.replace(/ /g, '');
+    const found = Object.entries(PINYIN_DICT).find(([k]) => k.replace(/ /g,'') === noSpace);
+    if (found) return found[1];
 
-  // 3. Stripped tones whole phrase
+    // Stripped tones single word
+    const stripped = stripTones(key);
+    const foundStripped = Object.entries(PINYIN_DICT).find(([k]) => stripTones(k) === stripped);
+    if (foundStripped) return foundStripped[1];
+
+    return '';
+  }
+
+  // 3. Word by word for multi-word phrases
+  const parts = words.map(w => {
+    if (PINYIN_DICT[w]) return PINYIN_DICT[w];
+    const noSp = w.replace(/ /g, '');
+    const f1 = Object.entries(PINYIN_DICT).find(([k]) => k.replace(/ /g,'') === noSp);
+    if (f1) return f1[1];
+    const s = stripTones(w);
+    const f2 = Object.entries(PINYIN_DICT).find(([k]) => stripTones(k) === s);
+    return f2 ? f2[1] : null;
+  });
+
+  // Return if we found at least half the words
+  const foundCount = parts.filter(Boolean).length;
+  if (foundCount >= Math.ceil(words.length / 2)) {
+    return parts.map((p, i) => p || `[${words[i]}]`).join('');
+  }
+
+  // 4. Last resort: stripped tones whole phrase
   const stripped = stripTones(key);
   const foundStripped = Object.entries(PINYIN_DICT).find(([k]) => stripTones(k) === stripped);
   if (foundStripped) return foundStripped[1];
-
-  // 4. Word by word — split on spaces and look up each syllable/word
-  const words = key.split(/\s+/);
-  if (words.length > 1) {
-    const parts = words.map(w => {
-      if (PINYIN_DICT[w]) return PINYIN_DICT[w];
-      const s = stripTones(w);
-      const f = Object.entries(PINYIN_DICT).find(([k]) => stripTones(k) === s);
-      return f ? f[1] : null;
-    });
-    // Only return if we found at least half the words
-    const found = parts.filter(Boolean);
-    if (found.length >= Math.ceil(words.length / 2)) {
-      return parts.map((p, i) => p || `[${words[i]}]`).join('');
-    }
-  }
 
   return '';
 }
